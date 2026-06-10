@@ -40,7 +40,7 @@ class BookingAdminController extends Controller
             ]);
         }
 
-        $booking->update(['status' => $request->string('status')]);
+        $booking->update(['status' => $request->input('status')]);
 
         return response()->json([
             'message' => 'Статус обновлён.',

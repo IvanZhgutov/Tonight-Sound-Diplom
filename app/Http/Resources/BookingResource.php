@@ -11,14 +11,14 @@ class BookingResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'date' => $this->date->format('Y-m-d'),
-            'times' => $this->times,
+            'date' => $this->date?->format('Y-m-d'),
+            'times' => $this->times ?? [],
             'service' => new ServiceResource($this->whenLoaded('service')),
             'total' => $this->total,
             'telegram' => $this->telegram,
             'comment' => $this->comment,
             'status' => $this->status,
-            'is_past' => $this->isPast(),
+            'is_past' => $this->date ? $this->isPast() : false,
             'user' => new UserResource($this->whenLoaded('user')),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
