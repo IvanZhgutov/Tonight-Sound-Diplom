@@ -998,7 +998,6 @@ button.nav-login {
 }
 
 .plugin-request .form-error { margin-top: 18px; }
-
 /* баннер после создания записи */
 .success-banner {
   padding: 16px 24px;
@@ -1128,7 +1127,7 @@ button.nav-login {
 /* --- слоты времени: 3 ряда, дальше скролл --- */
 .slots-scroll {
   /* 3 ряда слотов (~46px) + 2 отступа + запас */
-  max-height: 168px;
+  max-height: 170px;
   overflow-y: auto;
   padding-right: 8px;
   scrollbar-width: thin;
@@ -1341,28 +1340,19 @@ button.nav-login {
   .admin-actions .btn { flex: 1; }
 }
 
-/* ============================================================
-   Правки v3: прижатый футер, аккордеоны плагинов, фото оборудования
-   ============================================================ */
 
-/* --- футер всегда внизу страницы --- */
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
 
-.page {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
 
-.page > main { flex: 1; }
 
-.page > .footer { margin-top: auto; }
 
-.auth-wrap { min-height: 0; } /* высоту теперь держит flex-раскладка */
+
+
+
+
+
+
+
+
 
 /* --- категории плагинов: выпадающие списки --- */
 .acc-list { display: grid; gap: 14px; margin-top: 28px; }
@@ -1410,7 +1400,7 @@ button.nav-login {
 
 .acc-body .plugins-grid {
   margin-top: 0;
-  padding: 4px 26px 24px;
+  padding: 12px;
 }
 
 .acc-body .plugin-card {
