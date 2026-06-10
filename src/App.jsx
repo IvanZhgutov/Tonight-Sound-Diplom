@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { useAuthStore } from './store/authStore';
+import { useThemeStore } from './store/themeStore';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -14,6 +17,18 @@ import Admin from './pages/Admin';
 
 export default function App() {
   const location = useLocation();
+  const fetchMe = useAuthStore((s) => s.fetchMe);
+  const theme = useThemeStore((s) => s.theme);
+
+  // Проверяем сессию по токену при старте приложения
+  useEffect(() => {
+    fetchMe();
+  }, [fetchMe]);
+
+  // Применяем тему при загрузке
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+  }, [theme]);
 
   return (
     <>

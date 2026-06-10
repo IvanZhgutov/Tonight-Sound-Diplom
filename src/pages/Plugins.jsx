@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Footer from '../components/Footer';
-import { PLUGINS, PLUGIN_CATEGORIES } from '../general/constants';
-import { usePluginStore } from '../store/pluginStore';
+import { PLUGIN_CATEGORIES } from '../general/constants';
+import { useCatalogStore } from '../store/catalogStore';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 // Порядок секций: базовые категории + динамические от запросов артистов
@@ -13,26 +13,32 @@ const EXTRA_ORDER = ['Новинка', 'Скоро'];
 export default function Plugins() {
   useDocumentTitle('Плагины');
 
-  const requested = usePluginStore((s) => s.requested);
-  const requestPlugin = usePluginStore((s) => s.requestPlugin);
+  const plugins = useCatalogStore((s) => s.plugins);
+  const pluginsLoading = useCatalogStore((s) => s.pluginsLoading);
+  const pluginsFetched = useCatalogStore((s) => s.pluginsFetched);
+  const fetchPlugins = useCatalogStore((s) => s.fetchPlugins);
+  const requestPlugin = useCatalogStore((s) => s.requestPlugin);
 
   const [query, setQuery] = useState('');
   const [openCats, setOpenCats] = useState(() => new Set([BASE_ORDER[0]]));
   const [requestName, setRequestName] = useState('');
+  const [requesting, setRequesting] = useState(false);
   const [feedback, setFeedback] = useState(null); // { type: 'ok' | 'error', text }
 
-  const allPlugins = useMemo(() => [...PLUGINS, ...requested], [requested]);
+  useEffect(() => {
+    if (!pluginsFetched) fetchPlugins();
+  }, [pluginsFetched, fetchPlugins]);
 
   const searching = query.trim().length > 0;
 
   // Группируем по категориям; при активном поиске оставляем только совпадения
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const filtered = allPlugins.filter(
+    const filtered = plugins.filter(
       (p) =>
         !q ||
         p.name.toLowerCase().includes(q) ||
-        p.vendor.toLowerCase().includes(q)
+        (p.vendor ?? '').toLowerCase().includes(q)
     );
     const order = [...BASE_ORDER, ...EXTRA_ORDER];
     return order
@@ -41,7 +47,7 @@ export default function Plugins() {
         items: filtered.filter((p) => p.category === category),
       }))
       .filter((g) => g.items.length > 0);
-  }, [allPlugins, query]);
+  }, [plugins, query]);
 
   const totalFound = groups.reduce((sum, g) => sum + g.items.length, 0);
 
@@ -53,14 +59,17 @@ export default function Plugins() {
     });
   };
 
-  const handleRequest = (e) => {
+  const handleRequest = async (e) => {
     e.preventDefault();
-    const result = requestPlugin(requestName);
+    if (requesting) return;
+    setRequesting(true);
+    const result = await requestPlugin(requestName.trim());
+    setRequesting(false);
     if (result.ok) {
-      setFeedback({ type: 'ok', text: `«${requestName.trim()}» добавлен в список — скоро он появится в студии!` });
+      setFeedback({ type: 'ok', text: result.message });
       setRequestName('');
     } else {
-      setFeedback({ type: 'error', text: result.error });
+      setFeedback({ type: 'error', text: result.message });
     }
   };
 
@@ -95,6 +104,12 @@ export default function Plugins() {
             </span>
           )}
         </div>
+
+        {pluginsLoading && plugins.length === 0 && (
+          <div className="glass empty-note" style={{ marginTop: 28 }}>
+            <p className="loading-dots">Загружаем каталог плагинов</p>
+          </div>
+        )}
 
         {/* Категории-аккордеоны */}
         <div className="acc-list">
@@ -134,14 +149,14 @@ export default function Plugins() {
                           <article key={p.id} className="glass plugin-card">
                             <div className="plugin-meta">
                               <h3>{p.name}</h3>
-                              {(p.pending || p.category === 'Новинка') && (
-                                <span className={`tag ${p.pending ? 'tag-soon' : 'tag-new'}`}>
-                                  {p.pending ? 'Скоро' : 'Новинка'}
+                              {(p.status === 'requested' || p.status === 'new') && (
+                                <span className={`tag ${p.status === 'requested' ? 'tag-soon' : 'tag-new'}`}>
+                                  {p.status === 'requested' ? 'Скоро' : 'Новинка'}
                                 </span>
                               )}
                             </div>
                             <span className="vendor">
-                              {p.vendor} · {p.version}
+                              {p.vendor}{p.version ? ` · ${p.version}` : ''}
                             </span>
                           </article>
                         ))}
@@ -154,7 +169,7 @@ export default function Plugins() {
           })}
         </div>
 
-        {groups.length === 0 && (
+        {!pluginsLoading && groups.length === 0 && plugins.length > 0 && (
           <motion.div
             className="glass empty-note"
             initial={{ opacity: 0 }}
@@ -186,7 +201,9 @@ export default function Plugins() {
                 setFeedback(null);
               }}
             />
-            <button type="submit" className="btn btn-primary">Добавить</button>
+            <button type="submit" className="btn btn-primary" disabled={requesting}>
+              {requesting ? 'Отправляем…' : 'Добавить'}
+            </button>
           </form>
           <AnimatePresence>
             {feedback && (

@@ -4,9 +4,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Logo from './Logo';
 import { NAV_LINKS } from '../general/constants';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 
 export default function Header() {
   const user = useAuthStore((s) => s.user);
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
 
@@ -15,81 +18,103 @@ export default function Header() {
     setMenuOpen(false);
   }, [pathname]);
 
-  const links = user?.isAdmin
+  const links = user?.is_admin
     ? [...NAV_LINKS, { to: '/admin', label: 'Админка' }]
     : NAV_LINKS;
 
   return (
-    <motion.header
-      className="header"
-      initial={{ y: -32, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <nav className="nav glass">
-        <Logo />
+    <>
+      {/* Фиксированный переключатель темы — десктоп */}
+      <button
+        type="button"
+        className="theme-toggle-fixed"
+        onClick={toggleTheme}
+        aria-label="Переключить тему"
+        title={theme === 'dark' ? 'Светлая тема' : 'Темная тема'}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
 
-        <ul className="nav-links">
-          {links.map(({ to, label }) => (
-            <li key={to}>
-              <NavLink to={to} className={({ isActive }) => (isActive ? 'active' : undefined)}>
-                {label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+      <motion.header
+        className="header"
+        initial={{ y: -32, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <nav className="nav glass">
+          <Logo />
 
-        <div className="nav-auth">
-          {!user && (
-            <Link to="/login" className="nav-login">
-              Вход
+          <ul className="nav-links">
+            {links.map(({ to, label }) => (
+              <li key={to}>
+                <NavLink to={to} className={({ isActive }) => (isActive ? 'active' : undefined)}>
+                  {label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+
+          <div className="nav-auth">
+            {!user && (
+              <Link to="/login" className="nav-login">
+                Вход
+              </Link>
+            )}
+            <Link to="/booking" className="btn btn-primary">
+              Записаться
             </Link>
-          )}
-          <Link to="/booking" className="btn btn-primary">
-            Записаться
-          </Link>
-          <button
-            type="button"
-            className="burger"
-            aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            <span className={menuOpen ? 'open' : ''} />
-          </button>
-        </div>
-      </nav>
+            <button
+              type="button"
+              className="burger"
+              aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <span className={menuOpen ? 'open' : ''} />
+            </button>
+          </div>
+        </nav>
 
-      {/* Мобильное меню */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            className="mobile-menu glass"
-            initial={{ opacity: 0, y: -12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <ul>
-              {links.map(({ to, label }) => (
-                <li key={to}>
-                  <NavLink
-                    to={to}
-                    className={({ isActive }) => (isActive ? 'active' : undefined)}
-                  >
-                    {label}
-                  </NavLink>
-                </li>
-              ))}
-              {!user && (
+        {/* Мобильное меню */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              className="mobile-menu glass"
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <ul>
+                {links.map(({ to, label }) => (
+                  <li key={to}>
+                    <NavLink
+                      to={to}
+                      className={({ isActive }) => (isActive ? 'active' : undefined)}
+                    >
+                      {label}
+                    </NavLink>
+                  </li>
+                ))}
+                {!user && (
+                  <li>
+                    <NavLink to="/login">Вход</NavLink>
+                  </li>
+                )}
                 <li>
-                  <NavLink to="/login">Вход</NavLink>
+                  <button
+                    type="button"
+                    className="mobile-theme-toggle"
+                    onClick={toggleTheme}
+                  >
+                    {theme === 'dark' ? '☀️ Светлая тема' : '🌙 Темная тема'}
+                  </button>
                 </li>
-              )}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+              </ul>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
+    </>
   );
 }

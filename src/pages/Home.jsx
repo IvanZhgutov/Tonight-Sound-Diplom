@@ -5,12 +5,22 @@ import Footer from '../components/Footer';
 import Equalizer from '../components/Equalizer';
 import ImagePlaceholder from '../components/ImagePlaceholder';
 import Reveal, { staggerContainer, staggerItem } from '../components/Reveal';
-import { SERVICES, HERO_STATS, STUDIO_FEATURES, EQUIPMENT } from '../general/constants';
+import { useEffect } from 'react';
+import { HERO_STATS, STUDIO_FEATURES, EQUIPMENT } from '../general/constants';
+import { useCatalogStore } from '../store/catalogStore';
 import { formatPrice } from '../general/utils';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export default function Home() {
   useDocumentTitle();
+
+  const services = useCatalogStore((s) => s.services);
+  const servicesFetched = useCatalogStore((s) => s.servicesFetched);
+  const fetchServices = useCatalogStore((s) => s.fetchServices);
+
+  useEffect(() => {
+    if (!servicesFetched) fetchServices();
+  }, [servicesFetched, fetchServices]);
 
   return (
     <PageTransition>
@@ -76,11 +86,11 @@ export default function Home() {
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
             >
-              {SERVICES.map((s) => (
-                <motion.article className="glass card" key={s.id} variants={staggerItem}>
+              {services.map((s) => (
+                <motion.article className="glass card" key={s.slug} variants={staggerItem}>
                   <div className="card-icon">{s.icon}</div>
                   <h3>{s.name}</h3>
-                  <p>{s.desc}</p>
+                  <p>{s.description}</p>
                   <span className="price">
                     {s.price == null
                       ? 'по запросу'
@@ -88,6 +98,11 @@ export default function Home() {
                   </span>
                 </motion.article>
               ))}
+              {!services.length && (
+                <p className="loading-dots" style={{ gridColumn: '1 / -1' }}>
+                  Загружаем услуги
+                </p>
+              )}
             </motion.div>
           </div>
         </section>
@@ -95,7 +110,7 @@ export default function Home() {
         {/* О студии */}
         <section className="section">
           <div className="container about">
-            <Reveal>
+            <Reveal className='photo-studio-container'>
               <ImagePlaceholder label="Фото студии" variant="tall" />
             </Reveal>
             <Reveal delay={0.1}>

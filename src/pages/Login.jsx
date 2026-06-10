@@ -20,15 +20,19 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (!email.trim() || !password) {
       return setError('Заполни email и пароль');
     }
-    const result = login(email.trim(), password);
-    if (!result.ok) return setError(result.error);
-    navigate(result.isAdmin ? '/admin' : from, { replace: true });
+    setSubmitting(true);
+    const result = await login(email.trim(), password);
+    setSubmitting(false);
+    if (!result.ok) return setError(result.message);
+    navigate(result.user?.is_admin ? '/admin' : from, { replace: true });
   };
 
   return (
@@ -90,7 +94,9 @@ export default function Login() {
               )}
             </AnimatePresence>
 
-            <button type="submit" className="btn btn-primary">Войти</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Входим…' : 'Войти'}
+            </button>
           </form>
 
           <p className="auth-switch">

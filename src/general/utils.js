@@ -61,16 +61,6 @@ export function dayLabel(iso) {
   return `${DOW_FULL[d.getDay()]}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
 }
 
-/** Детерминированная «занятость» слота — имитация бэкенда */
-export function isSlotBusy(dayIso, time) {
-  const str = dayIso + time;
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
-  }
-  return hash % 5 === 0; // примерно каждый пятый слот занят
-}
-
 export function formatPrice(value) {
   if (value == null) return 'по запросу';
   return `${value.toLocaleString('ru-RU')} ₽`;
@@ -100,6 +90,7 @@ export function hoursWord(n) {
 
 /** Дата записи для карточки: { day: 17, caption: "июня, ср" } */
 export function bookingDateParts(iso) {
+  if (!iso) return { day: '?', caption: 'неизвестно' };
   const d = new Date(iso + 'T00:00:00');
   return {
     day: d.getDate(),
@@ -118,15 +109,4 @@ export function initials(name = '') {
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
     .join('') || '∗';
-}
-
-/** Старые записи могли хранить time/duration — приводим к новому виду times[] */
-export function normalizeBookingTimes(booking) {
-  if (Array.isArray(booking.times)) return booking.times;
-  if (booking.time) {
-    const start = parseInt(booking.time, 10);
-    const len = booking.duration ?? 1;
-    return Array.from({ length: len }, (_, i) => `${String((start + i) % 24).padStart(2, '0')}:00`);
-  }
-  return [];
 }

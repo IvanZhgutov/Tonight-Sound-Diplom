@@ -1,18 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Footer from '../components/Footer';
-import { BOOKING_STATUS } from '../general/constants';
-import {
-  bookingDateParts,
-  formatPrice,
-  formatTimes,
-  hoursWord,
-  initials,
-  isPastDate,
-  normalizeBookingTimes,
-} from '../general/utils';
+import { displayStatus } from '../general/constants';
+import { bookingDateParts, formatPrice, formatTimes, hoursWord, initials } from '../general/utils';
 import { useAuthStore } from '../store/authStore';
 import { useBookingStore } from '../store/bookingStore';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -24,25 +16,19 @@ export default function Profile() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const allBookings = useBookingStore((s) => s.bookings);
+
+  const bookings = useBookingStore((s) => s.bookings);
+  const loading = useBookingStore((s) => s.loading);
+  const error = useBookingStore((s) => s.error);
+  const fetchBookings = useBookingStore((s) => s.fetchBookings);
   const cancelBooking = useBookingStore((s) => s.cancelBooking);
 
-  const bookings = useMemo(
-    () =>
-      allBookings
-        .filter((b) => b.userId === user.id)
-        // прошедшие — в конец, остальные по ближайшей дате
-        .sort((a, b) => {
-          const aPast = isPastDate(a.dateIso);
-          const bPast = isPastDate(b.dateIso);
-          if (aPast !== bPast) return aPast ? 1 : -1;
-          return aPast ? b.dateIso.localeCompare(a.dateIso) : a.dateIso.localeCompare(b.dateIso);
-        }),
-    [allBookings, user.id]
-  );
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -81,12 +67,22 @@ export default function Profile() {
 
         {/* Список записей */}
         <section className="bookings-list">
+          {loading && bookings.length === 0 && (
+            <div className="glass empty-note">
+              <p className="loading-dots">Загружаем твои записи</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="glass empty-note">
+              <p className="form-error" style={{ marginTop: 0 }}>{error}</p>
+            </div>
+          )}
+
           <AnimatePresence mode="popLayout">
             {bookings.map((b) => {
-              const date = bookingDateParts(b.dateIso);
-              const times = normalizeBookingTimes(b);
-              const past = isPastDate(b.dateIso);
-              const status = past ? BOOKING_STATUS.done : BOOKING_STATUS[b.status];
+              const date = bookingDateParts(b.date);
+              const status = displayStatus(b);
 
               return (
                 <motion.article
@@ -103,16 +99,16 @@ export default function Profile() {
                     <span>{date.caption}</span>
                   </div>
                   <div className="booking-info">
-                    <h3>{b.serviceName}</h3>
+                    <h3>{b.service?.name ?? 'Сессия'}</h3>
                     <p>
-                      {formatTimes(times)}
-                      {b.hourly !== false &&
-                        ` · ${times.length} ${hoursWord(times.length)}`}{' '}
+                      {formatTimes(b.times)}
+                      {b.service?.hourly &&
+                        ` · ${b.times.length} ${hoursWord(b.times.length)}`}{' '}
                       · {formatPrice(b.total)}
                     </p>
                   </div>
                   <span className={`status ${status.className}`}>{status.label}</span>
-                  {past ? (
+                  {b.is_past ? (
                     <Link to="/booking" className="btn btn-ghost">Повторить</Link>
                   ) : (
                     <button
@@ -129,7 +125,7 @@ export default function Profile() {
           </AnimatePresence>
 
           {/* Пустое состояние */}
-          {bookings.length === 0 && (
+          {!loading && !error && bookings.length === 0 && (
             <motion.div
               className="glass empty-note"
               initial={{ opacity: 0, y: 20 }}

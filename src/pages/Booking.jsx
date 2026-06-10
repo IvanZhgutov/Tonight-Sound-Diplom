@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Footer from '../components/Footer';
-import { BOOKABLE_SERVICES, TIME_SLOTS } from '../general/constants';
+import api from '../api/client';
+import { TIME_SLOTS } from '../general/constants';
 import {
   CAL_DOW,
   dayLabel,
@@ -13,11 +14,11 @@ import {
   getWeekDays,
   getWeekFrom,
   hoursWord,
-  isSlotBusy,
   minBookableIso,
 } from '../general/utils';
 import { useAuthStore } from '../store/authStore';
 import { useBookingStore } from '../store/bookingStore';
+import { useCatalogStore } from '../store/catalogStore';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export default function Booking() {
@@ -25,10 +26,16 @@ export default function Booking() {
 
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const addBooking = useBookingStore((s) => s.addBooking);
+  const createBooking = useBookingStore((s) => s.createBooking);
   const draft = useBookingStore((s) => s.draft);
   const setDraft = useBookingStore((s) => s.setDraft);
   const clearDraft = useBookingStore((s) => s.clearDraft);
+
+  const services = useCatalogStore((s) => s.services);
+  const servicesFetched = useCatalogStore((s) => s.servicesFetched);
+  const fetchServices = useCatalogStore((s) => s.fetchServices);
+
+  const bookable = useMemo(() => services.filter((s) => s.bookable), [services]);
 
   const defaultWeek = useMemo(getWeekDays, []);
   const minIso = useMemo(minBookableIso, []);
@@ -36,12 +43,17 @@ export default function Booking() {
   // Черновик восстанавливает выбор после ухода на /login или перезагрузки
   const validDraft = draft && draft.dayIso >= minIso ? draft : null;
 
-  const [dayIso, setDayIso] = useState(validDraft?.dayIso ?? getWeekDays()[0].iso);
+  const [dayIso, setDayIso] = useState(validDraft?.dayIso ?? defaultWeek[0].iso);
   const [times, setTimes] = useState(validDraft?.times ?? []);
-  const [serviceId, setServiceId] = useState(validDraft?.serviceId ?? BOOKABLE_SERVICES[0].id);
+  const [serviceSlug, setServiceSlug] = useState(validDraft?.serviceSlug ?? '');
   const [telegram, setTelegram] = useState(validDraft?.telegram ?? '');
   const [comment, setComment] = useState(validDraft?.comment ?? '');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Занятые часы с бэкенда
+  const [busy, setBusy] = useState([]);
+  const [busyLoading, setBusyLoading] = useState(false);
 
   // Вид выбора дня: неделя или календарь месяца
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -58,20 +70,50 @@ export default function Booking() {
     [defaultWeek, dayIso]
   );
 
+  useEffect(() => {
+    if (!servicesFetched) fetchServices();
+  }, [servicesFetched, fetchServices]);
+
+  // Услуга по умолчанию — первая доступная
+  useEffect(() => {
+    if (!serviceSlug && bookable.length) {
+      setServiceSlug(bookable[0].slug);
+    }
+  }, [bookable, serviceSlug]);
+
+  // Реальная занятость слотов на выбранную дату
+  useEffect(() => {
+    let ignore = false;
+    setBusyLoading(true);
+    api
+      .get('/availability', { params: { date: dayIso } })
+      .then(({ data }) => {
+        if (!ignore) setBusy(data.busy ?? []);
+      })
+      .catch(() => {
+        if (!ignore) setBusy([]);
+      })
+      .finally(() => {
+        if (!ignore) setBusyLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [dayIso]);
+
   // Любое изменение формы — в черновик
   useEffect(() => {
-    setDraft({ dayIso, times, serviceId, telegram, comment });
-  }, [dayIso, times, serviceId, telegram, comment, setDraft]);
+    setDraft({ dayIso, times, serviceSlug, telegram, comment });
+  }, [dayIso, times, serviceSlug, telegram, comment, setDraft]);
 
-  const service = BOOKABLE_SERVICES.find((s) => s.id === serviceId);
-  const total =
-    service.price == null
-      ? null
-      : service.hourly
-        ? times.length
-          ? service.price * times.length
-          : service.price
-        : service.price;
+  const service = bookable.find((s) => s.slug === serviceSlug) ?? bookable[0];
+  const total = !service || service.price == null
+    ? null
+    : service.hourly
+      ? times.length
+        ? service.price * times.length
+        : service.price
+      : service.price;
 
   const pickDay = (iso) => {
     setDayIso(iso);
@@ -86,23 +128,34 @@ export default function Booking() {
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) return; // кнопка disabled, страхуемся
+    if (!user || submitting) return;
 
     if (!times.length) return setError('Выбери хотя бы один час');
     if (!telegram.trim()) return setError('Укажи Telegram ID для связи');
 
-    addBooking({
-      userId: user.id,
-      dateIso: dayIso,
+    setSubmitting(true);
+    const result = await createBooking({
+      date: dayIso,
       times: [...times].sort(),
-      serviceName: service.name,
-      hourly: service.hourly,
-      total,
+      service: service.slug,
       telegram: telegram.trim(),
-      comment: comment.trim(),
+      comment: comment.trim() || undefined,
     });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      // часы могли занять, пока пользователь думал — обновляем занятость
+      if (result.errors?.times) {
+        const { data } = await api.get('/availability', { params: { date: dayIso } });
+        setBusy(data.busy ?? []);
+        setTimes([]);
+      }
+      return;
+    }
+
     clearDraft();
     navigate('/profile', { state: { justBooked: true } });
   };
@@ -217,16 +270,17 @@ export default function Booking() {
               </AnimatePresence>
             </section>
 
-            {/* Шаг 2: время (мультивыбор) */}
+            {/* Шаг 2: время (мультивыбор, занятость с бэкенда) */}
             <section className="glass booking-panel">
               <div className="panel-head">
                 <h3><span className="step-num">2</span> Выбери время</h3>
-                <span className="panel-hint">можно несколько часов</span>
+                <span className="panel-hint">
+                  {busyLoading ? 'проверяем занятость…' : 'можно несколько часов'}
+                </span>
               </div>
-              <div className="slots slots-scroll">
+              <div className={`slots slots-scroll${busyLoading ? ' slots-loading' : ''}`}>
                 {TIME_SLOTS.map((t) => {
-                  const busy = isSlotBusy(dayIso, t);
-                  if (busy) {
+                  if (busy.includes(t)) {
                     return (
                       <span key={t} className="slot disabled" aria-disabled="true">
                         {t}
@@ -238,6 +292,7 @@ export default function Booking() {
                       <input
                         type="checkbox"
                         checked={times.includes(t)}
+                        disabled={busyLoading}
                         onChange={() => toggleTime(t)}
                       />
                       {t}
@@ -255,11 +310,13 @@ export default function Booking() {
                   <label htmlFor="service">Услуга</label>
                   <select
                     id="service"
-                    value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value)}
+                    value={serviceSlug}
+                    onChange={(e) => setServiceSlug(e.target.value)}
+                    disabled={!bookable.length}
                   >
-                    {BOOKABLE_SERVICES.map((s) => (
-                      <option key={s.id} value={s.id}>
+                    {!bookable.length && <option>Загружаем услуги…</option>}
+                    {bookable.map((s) => (
+                      <option key={s.slug} value={s.slug}>
                         {s.name} — {formatPrice(s.price)} / {s.hourly ? 'час' : 'трек'}
                       </option>
                     ))}
@@ -297,17 +354,21 @@ export default function Booking() {
             <h3>Твоя запись</h3>
             <SummaryRow label="День" value={dayLabel(dayIso)} />
             <SummaryRow label="Время" value={formatTimes(times)} />
-            {service.hourly && times.length > 0 && (
+            {service?.hourly && times.length > 0 && (
               <SummaryRow label="Часов" value={`${times.length} ${hoursWord(times.length)}`} />
             )}
-            <SummaryRow label="Услуга" value={service.name} />
+            <SummaryRow label="Услуга" value={service?.name ?? '…'} />
             <div className="summary-row total">
               <span>Итого</span>
               <AnimatedValue value={formatPrice(total)} />
             </div>
 
-            <button type="submit" className="btn btn-primary" disabled={!user}>
-              Подтвердить запись
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={!user || submitting || !service}
+            >
+              {submitting ? 'Отправляем…' : 'Подтвердить запись'}
             </button>
 
             <AnimatePresence>

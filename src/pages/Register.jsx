@@ -25,6 +25,7 @@ export default function Register() {
     agree: false,
   });
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const update = (key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -32,8 +33,9 @@ export default function Register() {
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
     if (!form.name.trim()) return setError('Укажи имя');
     if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return setError('Похоже, в email опечатка');
@@ -43,13 +45,16 @@ export default function Register() {
     if (form.password !== form.password2) return setError('Пароли не совпадают');
     if (!form.agree) return setError('Нужно согласиться с условиями обработки данных');
 
-    const result = register({
+    setSubmitting(true);
+    const result = await register({
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
       password: form.password,
+      password2: form.password2,
     });
-    if (!result.ok) return setError(result.error);
+    setSubmitting(false);
+    if (!result.ok) return setError(result.message);
     navigate(from, { replace: true });
   };
 
@@ -135,7 +140,9 @@ export default function Register() {
               )}
             </AnimatePresence>
 
-            <button type="submit" className="btn btn-primary">Зарегистрироваться</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Создаём аккаунт…' : 'Зарегистрироваться'}
+            </button>
           </form>
 
           <p className="auth-switch">

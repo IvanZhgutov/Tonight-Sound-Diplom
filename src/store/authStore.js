@@ -1,59 +1,76 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ADMIN_CREDENTIALS } from '../general/constants';
+import api, { apiError, getToken, setToken, clearToken, setOnUnauthorized } from '../api/client';
 
-// Мок-авторизация на localStorage. Пароли хранятся в открытом виде —
-// это только для демо, при подключении бэкенда логика заменится.
 export const useAuthStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
-      users: [],
+      // true, когда первичная проверка сессии завершена —
+      // до этого ProtectedRoute не делает выводов
+      initialized: false,
 
-      register: ({ name, email, phone, password }) => {
-        if (email.toLowerCase() === ADMIN_CREDENTIALS.email) {
-          return { ok: false, error: 'Этот email зарезервирован' };
-        }
-        const exists = get().users.some(
-          (u) => u.email.toLowerCase() === email.toLowerCase()
-        );
-        if (exists) {
-          return { ok: false, error: 'Пользователь с таким email уже существует' };
-        }
-        const user = {
-          id: crypto.randomUUID(),
-          name,
-          email,
-          phone,
-          password,
-        };
-        set((s) => ({ users: [...s.users, user], user }));
-        return { ok: true };
-      },
-
-      login: (email, password) => {
-        // Мок-админ: при подключении бэкенда роль будет приходить с сервера
-        if (email.toLowerCase() === ADMIN_CREDENTIALS.email) {
-          if (password !== ADMIN_CREDENTIALS.password) {
-            return { ok: false, error: 'Неверный пароль' };
-          }
-          set({
-            user: { id: 'admin', name: 'Администратор', email, isAdmin: true },
+      register: async ({ name, email, phone, password, password2 }) => {
+        try {
+          const { data } = await api.post('/auth/register', {
+            name,
+            email,
+            phone,
+            password,
+            password_confirmation: password2,
           });
-          return { ok: true, isAdmin: true };
+          setToken(data.token);
+          set({ user: data.user, initialized: true });
+          return { ok: true, user: data.user };
+        } catch (e) {
+          return { ok: false, ...apiError(e) };
         }
-
-        const user = get().users.find(
-          (u) => u.email.toLowerCase() === email.toLowerCase()
-        );
-        if (!user) return { ok: false, error: 'Аккаунт с таким email не найден' };
-        if (user.password !== password) return { ok: false, error: 'Неверный пароль' };
-        set({ user });
-        return { ok: true };
       },
 
-      logout: () => set({ user: null }),
+      login: async (email, password) => {
+        try {
+          const { data } = await api.post('/auth/login', { email, password });
+          setToken(data.token);
+          set({ user: data.user, initialized: true });
+          return { ok: true, user: data.user };
+        } catch (e) {
+          return { ok: false, ...apiError(e) };
+        }
+      },
+
+      // Проверка сессии при старте приложения
+      fetchMe: async () => {
+        if (!getToken()) {
+          set({ user: null, initialized: true });
+          return;
+        }
+        try {
+          const { data } = await api.get('/auth/me');
+          set({ user: data.data ?? data, initialized: true });
+        } catch {
+          // 401 уже обработан интерцептором
+          set({ user: null, initialized: true });
+        }
+      },
+
+      logout: async () => {
+        try {
+          await api.post('/auth/logout');
+        } catch {
+          // токен мог уже протухнуть — выходим локально в любом случае
+        }
+        clearToken();
+        set({ user: null });
+      },
+
+      forceLogout: () => set({ user: null }),
     }),
-    { name: 'ts-auth' }
+    {
+      name: 'ts-auth',
+      partialize: (s) => ({ user: s.user }),
+    }
   )
 );
+
+// 401 из интерцептора → локальный разлогин
+setOnUnauthorized(() => useAuthStore.getState().forceLogout());

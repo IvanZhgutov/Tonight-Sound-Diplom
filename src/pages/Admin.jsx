@@ -1,18 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Footer from '../components/Footer';
-import { BOOKING_STATUS } from '../general/constants';
-import {
-  bookingDateParts,
-  formatPrice,
-  formatTimes,
-  isPastDate,
-  normalizeBookingTimes,
-} from '../general/utils';
-import { useAuthStore } from '../store/authStore';
-import { useBookingStore } from '../store/bookingStore';
-import { usePluginStore } from '../store/pluginStore';
+import api, { apiError } from '../api/client';
+import { displayStatus } from '../general/constants';
+import { bookingDateParts, formatPrice, formatTimes } from '../general/utils';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const TABS = [
@@ -24,30 +16,64 @@ export default function Admin() {
   useDocumentTitle('Админ-панель');
 
   const [tab, setTab] = useState('bookings');
+  const [stats, setStats] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const users = useAuthStore((s) => s.users);
-  const bookings = useBookingStore((s) => s.bookings);
-  const setStatus = useBookingStore((s) => s.setStatus);
-  const requested = usePluginStore((s) => s.requested);
-  const approveRequest = usePluginStore((s) => s.approveRequest);
-  const removeRequest = usePluginStore((s) => s.removeRequest);
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [statsRes, bookingsRes, requestsRes] = await Promise.all([
+        api.get('/admin/stats'),
+        api.get('/admin/bookings'),
+        api.get('/admin/plugin-requests'),
+      ]);
+      setStats(statsRes.data);
+      setBookings(bookingsRes.data.data ?? []);
+      setRequests(requestsRes.data.data ?? []);
+    } catch (e) {
+      setError(apiError(e).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const pendingBookings = bookings.filter((b) => b.status === 'wait').length;
-  const pendingPlugins = requested.filter((p) => p.pending).length;
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
 
-  const sortedBookings = useMemo(
-    () =>
-      [...bookings].sort((a, b) => {
-        const order = { wait: 0, confirmed: 1, declined: 2 };
-        const ao = isPastDate(a.dateIso) ? 3 : order[a.status] ?? 1;
-        const bo = isPastDate(b.dateIso) ? 3 : order[b.status] ?? 1;
-        if (ao !== bo) return ao - bo;
-        return a.dateIso.localeCompare(b.dateIso);
-      }),
-    [bookings]
-  );
+  const setBookingStatus = async (id, status) => {
+    try {
+      const { data } = await api.patch(`/admin/bookings/${id}/status`, { status });
+      setBookings((prev) => prev.map((b) => (b.id === id ? data.booking : b)));
+      setStats((s) => s && { ...s, pending_bookings: Math.max(0, s.pending_bookings - 1) });
+    } catch (e) {
+      setError(apiError(e).message);
+    }
+  };
 
-  const userName = (id) => users.find((u) => u.id === id)?.name ?? 'Пользователь';
+  const approvePlugin = async (id) => {
+    try {
+      await api.patch(`/admin/plugins/${id}/approve`);
+      setRequests((prev) => prev.filter((p) => p.id !== id));
+      setStats((s) => s && { ...s, pending_plugins: Math.max(0, s.pending_plugins - 1) });
+    } catch (e) {
+      setError(apiError(e).message);
+    }
+  };
+
+  const declinePlugin = async (id) => {
+    try {
+      await api.delete(`/admin/plugins/${id}`);
+      setRequests((prev) => prev.filter((p) => p.id !== id));
+      setStats((s) => s && { ...s, pending_plugins: Math.max(0, s.pending_plugins - 1) });
+    } catch (e) {
+      setError(apiError(e).message);
+    }
+  };
 
   return (
     <PageTransition>
@@ -58,23 +84,28 @@ export default function Admin() {
             Админ-<span className="accent">панель</span>
           </h1>
           <p>
-            Заявки хранятся локально (без бэкенда). Подтверждай записи и
-            обрабатывай запросы на плагины.
+            Подтверждай записи и обрабатывай запросы артистов на плагины.
           </p>
         </div>
+
+        {error && (
+          <div className="glass empty-note" style={{ marginBottom: 24 }}>
+            <p className="form-error" style={{ marginTop: 0 }}>{error}</p>
+          </div>
+        )}
 
         {/* Счётчики */}
         <div className="admin-stats">
           <div className="glass admin-stat">
-            <strong>{pendingBookings}</strong>
+            <strong>{stats ? stats.pending_bookings : '—'}</strong>
             <span>записей ждут подтверждения</span>
           </div>
           <div className="glass admin-stat">
-            <strong>{pendingPlugins}</strong>
+            <strong>{stats ? stats.pending_plugins : '—'}</strong>
             <span>запросов на плагины</span>
           </div>
           <div className="glass admin-stat">
-            <strong>{users.length}</strong>
+            <strong>{stats ? stats.users : '—'}</strong>
             <span>зарегистрировано артистов</span>
           </div>
         </div>
@@ -93,115 +124,119 @@ export default function Admin() {
           ))}
         </div>
 
-        <AnimatePresence mode="wait">
-          {tab === 'bookings' ? (
-            <motion.section
-              key="bookings"
-              className="bookings-list"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.25 }}
-            >
-              {sortedBookings.map((b) => {
-                const date = bookingDateParts(b.dateIso);
-                const times = normalizeBookingTimes(b);
-                const past = isPastDate(b.dateIso);
-                const status = past ? BOOKING_STATUS.done : BOOKING_STATUS[b.status];
+        {loading && (
+          <div className="glass empty-note">
+            <p className="loading-dots">Загружаем заявки</p>
+          </div>
+        )}
 
-                return (
-                  <article key={b.id} className="glass booking-item admin-item">
-                    <div className="booking-date">
-                      <strong>{date.day}</strong>
-                      <span>{date.caption}</span>
-                    </div>
-                    <div className="booking-info">
-                      <h3>{b.serviceName}</h3>
-                      <p>
-                        {formatTimes(times)} · {formatPrice(b.total)} ·{' '}
-                        {userName(b.userId)} · {b.telegram ?? '—'}
-                      </p>
-                      {b.comment && <p className="admin-comment">«{b.comment}»</p>}
-                    </div>
-                    <span className={`status ${status.className}`}>{status.label}</span>
-                    {!past && b.status === 'wait' && (
-                      <div className="admin-actions">
-                        <button
-                          type="button"
-                          className="btn btn-primary"
-                          onClick={() => setStatus(b.id, 'confirmed')}
-                        >
-                          Подтвердить
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost"
-                          onClick={() => setStatus(b.id, 'declined')}
-                        >
-                          Отклонить
-                        </button>
+        {!loading && (
+          <AnimatePresence mode="wait">
+            {tab === 'bookings' ? (
+              <motion.section
+                key="bookings"
+                className="bookings-list"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.25 }}
+              >
+                {bookings.map((b) => {
+                  const date = bookingDateParts(b.date);
+                  const status = displayStatus(b);
+
+                  return (
+                    <article key={b.id} className="glass booking-item admin-item">
+                      <div className="booking-date">
+                        <strong>{date.day}</strong>
+                        <span>{date.caption}</span>
                       </div>
-                    )}
-                  </article>
-                );
-              })}
+                      <div className="booking-info">
+                        <h3>{b.service?.name ?? 'Сессия'}</h3>
+                        <p>
+                          {formatTimes(b.times)} · {formatPrice(b.total)} ·{' '}
+                          {b.user?.name ?? 'Пользователь'} · {b.telegram ?? '—'}
+                        </p>
+                        {b.comment && <p className="admin-comment">«{b.comment}»</p>}
+                      </div>
+                      <span className={`status ${status.className}`}>{status.label}</span>
+                      {!b.is_past && b.status === 'pending' && (
+                        <div className="admin-actions">
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={() => setBookingStatus(b.id, 'confirmed')}
+                          >
+                            Подтвердить
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => setBookingStatus(b.id, 'declined')}
+                          >
+                            Отклонить
+                          </button>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
 
-              {bookings.length === 0 && (
-                <div className="glass empty-note">
-                  <p>Заявок на запись пока нет.</p>
-                </div>
-              )}
-            </motion.section>
-          ) : (
-            <motion.section
-              key="plugins"
-              className="bookings-list"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.25 }}
-            >
-              {requested.map((p) => (
-                <article key={p.id} className="glass booking-item admin-item plugin-row">
-                  <div className="booking-info">
-                    <h3>{p.name}</h3>
-                    <p>
-                      {new Date(p.createdAt).toLocaleDateString('ru-RU')} ·{' '}
-                      {p.pending ? 'ожидает решения' : 'добавлен в студию'}
-                    </p>
+                {bookings.length === 0 && (
+                  <div className="glass empty-note">
+                    <p>Заявок на запись пока нет.</p>
                   </div>
-                  <span className={`status ${p.pending ? 'wait' : 'ok'}`}>
-                    {p.pending ? 'В очереди' : 'Добавлен'}
-                  </span>
-                  {p.pending && (
+                )}
+              </motion.section>
+            ) : (
+              <motion.section
+                key="plugins"
+                className="bookings-list"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.25 }}
+              >
+                {requests.map((p) => (
+                  <article key={p.id} className="glass booking-item admin-item plugin-row">
+                    <div className="booking-info">
+                      <h3>{p.name}</h3>
+                      <p>
+                        {p.created_at
+                          ? new Date(p.created_at).toLocaleDateString('ru-RU')
+                          : ''}{' '}
+                        · ожидает решения
+                      </p>
+                    </div>
+                    <span className="status wait">В очереди</span>
                     <div className="admin-actions">
                       <button
                         type="button"
                         className="btn btn-primary"
-                        onClick={() => approveRequest(p.id)}
+                        onClick={() => approvePlugin(p.id)}
                       >
                         Добавлен
                       </button>
                       <button
                         type="button"
                         className="btn btn-ghost"
-                        onClick={() => removeRequest(p.id)}
+                        onClick={() => declinePlugin(p.id)}
                       >
                         Отклонить
                       </button>
                     </div>
-                  )}
-                </article>
-              ))}
+                  </article>
+                ))}
 
-              {requested.length === 0 && (
-                <div className="glass empty-note">
-                  <p>Запросов на плагины пока нет.</p>
-                </div>
-              )}
-            </motion.section>
-          )}
-        </AnimatePresence>
+                {requests.length === 0 && (
+                  <div className="glass empty-note">
+                    <p>Запросов на плагины пока нет.</p>
+                  </div>
+                )}
+              </motion.section>
+            )}
+          </AnimatePresence>
+        )}
       </main>
 
       <Footer />
