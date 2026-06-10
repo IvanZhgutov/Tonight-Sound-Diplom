@@ -2,12 +2,11 @@ import { Link } from 'react-router-dom';
 import Logo from './Logo';
 import { NAV_LINKS, CONTACTS } from '../general/constants';
 
-export default function Footer({ compact = false }) {
+export default function Footer() {
   return (
     <footer className="footer">
       <div className="container">
-        {!compact && (
-          <div className="footer-grid">
+        <div className="footer-grid">
             <div>
               <Logo />
               <p>Студия звукозаписи полного цикла: от первой демки до релиза на площадках.</p>
@@ -30,8 +29,7 @@ export default function Footer({ compact = false }) {
                 <li><a href="#">{CONTACTS.address}</a></li>
               </ul>
             </div>
-          </div>
-        )}
+        </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Tonight Sound. Все права защищены.</span>
           <span>Сделано среди звёзд ✦</span>

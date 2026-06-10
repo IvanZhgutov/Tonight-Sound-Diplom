@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
+import Footer from '../components/Footer';
 import { useAuthStore } from '../store/authStore';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
@@ -98,6 +99,8 @@ export default function Login() {
           </p>
         </motion.section>
       </main>
+
+      <Footer />
     </PageTransition>
   );
 }

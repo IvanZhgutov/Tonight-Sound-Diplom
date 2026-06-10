@@ -11,6 +11,7 @@ import {
   formatTimes,
   getMonth,
   getWeekDays,
+  getWeekFrom,
   hoursWord,
   isSlotBusy,
   minBookableIso,
@@ -29,13 +30,13 @@ export default function Booking() {
   const setDraft = useBookingStore((s) => s.setDraft);
   const clearDraft = useBookingStore((s) => s.clearDraft);
 
-  const week = useMemo(getWeekDays, []);
+  const defaultWeek = useMemo(getWeekDays, []);
   const minIso = useMemo(minBookableIso, []);
 
   // Черновик восстанавливает выбор после ухода на /login или перезагрузки
   const validDraft = draft && draft.dayIso >= minIso ? draft : null;
 
-  const [dayIso, setDayIso] = useState(validDraft?.dayIso ?? week[0].iso);
+  const [dayIso, setDayIso] = useState(validDraft?.dayIso ?? getWeekDays()[0].iso);
   const [times, setTimes] = useState(validDraft?.times ?? []);
   const [serviceId, setServiceId] = useState(validDraft?.serviceId ?? BOOKABLE_SERVICES[0].id);
   const [telegram, setTelegram] = useState(validDraft?.telegram ?? '');
@@ -46,6 +47,16 @@ export default function Booking() {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0);
   const month = useMemo(() => getMonth(monthOffset), [monthOffset]);
+
+  // Если выбранный в календаре день выходит за пределы ближайших 7 дней —
+  // недельная полоса начинается с него
+  const week = useMemo(
+    () =>
+      defaultWeek.some((d) => d.iso === dayIso)
+        ? defaultWeek
+        : getWeekFrom(dayIso),
+    [defaultWeek, dayIso]
+  );
 
   // Любое изменение формы — в черновик
   useEffect(() => {
@@ -88,7 +99,6 @@ export default function Booking() {
       times: [...times].sort(),
       serviceName: service.name,
       hourly: service.hourly,
-      room: service.room,
       total,
       telegram: telegram.trim(),
       comment: comment.trim(),
@@ -107,7 +117,7 @@ export default function Booking() {
           </h1>
           <p>
             Выбери день, время и услугу. После подтверждения запись появится
-            на странице «Мои записи» в твоём личном кабинете.
+            в твоём профиле.
           </p>
         </div>
 
@@ -170,7 +180,10 @@ export default function Booking() {
                             type="button"
                             className={`cal-cell${cell.iso === dayIso ? ' selected' : ''}`}
                             disabled={cell.iso < minIso}
-                            onClick={() => pickDay(cell.iso)}
+                            onClick={() => {
+                              pickDay(cell.iso);
+                              setCalendarOpen(false); // авто-сворачивание после выбора
+                            }}
                           >
                             {cell.date}
                           </button>
@@ -288,7 +301,6 @@ export default function Booking() {
               <SummaryRow label="Часов" value={`${times.length} ${hoursWord(times.length)}`} />
             )}
             <SummaryRow label="Услуга" value={service.name} />
-            <SummaryRow label="Комната" value={service.room} />
             <div className="summary-row total">
               <span>Итого</span>
               <AnimatedValue value={formatPrice(total)} />
@@ -328,7 +340,7 @@ export default function Booking() {
         </form>
       </main>
 
-      <Footer compact />
+      <Footer />
     </PageTransition>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
+import Footer from '../components/Footer';
 import { useAuthStore } from '../store/authStore';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
@@ -90,7 +91,7 @@ export default function Register() {
               <input
                 id="phone"
                 type="tel"
-                placeholder="+7 (XXX)-XXX-XX-XX"
+                placeholder="+48 ___ ___ ___"
                 value={form.phone}
                 onChange={update('phone')}
               />
@@ -143,6 +144,8 @@ export default function Register() {
           </p>
         </motion.section>
       </main>
+
+      <Footer />
     </PageTransition>
   );
 }

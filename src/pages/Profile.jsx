@@ -18,7 +18,7 @@ import { useBookingStore } from '../store/bookingStore';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export default function Profile() {
-  useDocumentTitle('Мои записи');
+  useDocumentTitle('Профиль');
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -103,9 +103,7 @@ export default function Profile() {
                     <span>{date.caption}</span>
                   </div>
                   <div className="booking-info">
-                    <h3>
-                      {b.serviceName} · Комната {b.room}
-                    </h3>
+                    <h3>{b.serviceName}</h3>
                     <p>
                       {formatTimes(times)}
                       {b.hourly !== false &&
@@ -147,7 +145,7 @@ export default function Profile() {
         </section>
       </main>
 
-      <Footer compact />
+      <Footer />
     </PageTransition>
   );
 }

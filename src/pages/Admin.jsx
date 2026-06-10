@@ -116,7 +116,7 @@ export default function Admin() {
                       <span>{date.caption}</span>
                     </div>
                     <div className="booking-info">
-                      <h3>{b.serviceName} · Комната {b.room}</h3>
+                      <h3>{b.serviceName}</h3>
                       <p>
                         {formatTimes(times)} · {formatPrice(b.total)} ·{' '}
                         {userName(b.userId)} · {b.telegram ?? '—'}
@@ -204,7 +204,7 @@ export default function Admin() {
         </AnimatePresence>
       </main>
 
-      <Footer compact />
+      <Footer />
     </PageTransition>
   );
 }

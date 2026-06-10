@@ -29,8 +29,8 @@ export default function Home() {
               Звук, который <span className="accent">слышно из космоса</span>
             </motion.h1>
             <motion.p className="lead" variants={staggerItem}>
-              Запись вокала, сведение и мастеринг в студии с акустически
-              подготовленными комнатами и парком из 120+ плагинов.
+              Запись вокала, аранжировки и подкасты в акустически
+              подготовленной комнате с парком из 120+ плагинов.
               Запишись онлайн — выбери день и время за минуту.
             </motion.p>
             <motion.div className="hero-actions" variants={staggerItem}>
@@ -54,7 +54,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <Equalizer />
-            <p className="eq-caption">Live с пульта · комната A</p>
+            <p className="eq-caption">Live с пульта студии</p>
           </motion.div>
         </section>
 
@@ -65,8 +65,8 @@ export default function Home() {
               <span className="eyebrow">Услуги</span>
               <h2>Что мы делаем</h2>
               <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum
-                gravida sapien at sound design, sed commodo nisl pulvinar a.
+                От первой демки до мастера, готового к загрузке на площадки.
+                Бери отдельную услугу или закрывай весь продакшн в одном месте.
               </p>
             </Reveal>
             <motion.div
@@ -100,17 +100,16 @@ export default function Home() {
             </Reveal>
             <Reveal delay={0.1}>
               <span className="eyebrow">О студии</span>
-              <h2>Две комнаты, один уровень качества</h2>
+              <h2>Пространство, где рождается звук</h2>
               <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat.
+                Tonight Sound — компактная студия в центре Варшавы. Одна
+                акустически подготовленная комната, проверенная цепочка записи
+                и инженер, который слышит, что нужно именно твоему треку.
               </p>
               <p>
-                Duis aute irure dolor in reprehenderit in voluptate velit esse
-                cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-                cupidatat non proident, sunt in culpa qui officia.
+                Мы не гонимся за потоком сессий: работаем вдумчиво, помогаем
+                артисту раскрыться у микрофона и доводим каждую запись до
+                результата, который не стыдно поставить друзьям и лейблам.
               </p>
               <ul className="about-list">
                 {STUDIO_FEATURES.map((f) => (
@@ -137,7 +136,14 @@ export default function Home() {
             >
               {EQUIPMENT.map((item) => (
                 <motion.article className="glass card equip-card" key={item.model} variants={staggerItem}>
-                  <div className="card-icon">{item.icon}</div>
+                  {item.img ? (
+                    <img src={item.img} alt={item.model} className="equip-photo" />
+                  ) : (
+                    <ImagePlaceholder
+                      label={`Фото: ${item.model}`}
+                      variant="photo"
+                    />
+                  )}
                   <span className="equip-type">{item.type}</span>
                   <h3>{item.model}</h3>
                 </motion.article>
@@ -154,7 +160,7 @@ export default function Home() {
                 Готов записать <span className="accent">свой трек</span>?
               </h2>
               <p>
-                Выбери удобный день и время — подтверждение придёт на почту,
+                Выбери удобный день и время — мы свяжемся с тобой в Telegram,
                 а запись появится в твоём личном кабинете.
               </p>
               <Link to="/booking" className="btn btn-primary">Записаться на сессию</Link>

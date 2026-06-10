@@ -6,6 +6,10 @@ import { PLUGINS, PLUGIN_CATEGORIES } from '../general/constants';
 import { usePluginStore } from '../store/pluginStore';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
+// Порядок секций: базовые категории + динамические от запросов артистов
+const BASE_ORDER = PLUGIN_CATEGORIES.filter((c) => c !== 'Все');
+const EXTRA_ORDER = ['Новинка', 'Скоро'];
+
 export default function Plugins() {
   useDocumentTitle('Плагины');
 
@@ -13,21 +17,41 @@ export default function Plugins() {
   const requestPlugin = usePluginStore((s) => s.requestPlugin);
 
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('Все');
+  const [openCats, setOpenCats] = useState(() => new Set([BASE_ORDER[0]]));
   const [requestName, setRequestName] = useState('');
   const [feedback, setFeedback] = useState(null); // { type: 'ok' | 'error', text }
 
   const allPlugins = useMemo(() => [...PLUGINS, ...requested], [requested]);
 
-  const visible = useMemo(() => {
+  const searching = query.trim().length > 0;
+
+  // Группируем по категориям; при активном поиске оставляем только совпадения
+  const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return allPlugins.filter((p) => {
-      const matchesQuery =
-        !q || p.name.toLowerCase().includes(q) || p.vendor.toLowerCase().includes(q);
-      const matchesCategory = category === 'Все' || p.category === category;
-      return matchesQuery && matchesCategory;
+    const filtered = allPlugins.filter(
+      (p) =>
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        p.vendor.toLowerCase().includes(q)
+    );
+    const order = [...BASE_ORDER, ...EXTRA_ORDER];
+    return order
+      .map((category) => ({
+        category,
+        items: filtered.filter((p) => p.category === category),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [allPlugins, query]);
+
+  const totalFound = groups.reduce((sum, g) => sum + g.items.length, 0);
+
+  const toggleCat = (category) => {
+    setOpenCats((prev) => {
+      const next = new Set(prev);
+      next.has(category) ? next.delete(category) : next.add(category);
+      return next;
     });
-  }, [allPlugins, query, category]);
+  };
 
   const handleRequest = (e) => {
     e.preventDefault();
@@ -50,11 +74,11 @@ export default function Plugins() {
           </h1>
           <p>
             Всё, что установлено на наших машинах и доступно на любой сессии.
-            Ищи по названию или фильтруй по категории.
+            Открывай категорию или ищи по названию.
           </p>
         </div>
 
-        {/* Поиск и фильтры */}
+        {/* Поиск */}
         <div className="plugins-toolbar">
           <div className="search">
             <input
@@ -65,46 +89,72 @@ export default function Plugins() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <div className="chips">
-            {PLUGIN_CATEGORIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`chip${c === category ? ' active' : ''}`}
-                onClick={() => setCategory(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
+          {searching && (
+            <span className="search-count">
+              найдено: {totalFound}
+            </span>
+          )}
         </div>
 
-        {/* Сетка плагинов */}
-        <motion.div className="plugins-grid" layout>
-          <AnimatePresence mode="popLayout">
-            {visible.map((p) => (
-              <motion.article
-                key={p.id}
-                className="glass plugin-card"
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.25 }}
-              >
-                <div className="plugin-meta">
-                  <h3>{p.name}</h3>
-                  <span className={`tag${p.pending ? ' tag-soon' : ''}${p.category === 'Новинка' ? ' tag-new' : ''}`}>{p.category}</span>
-                </div>
-                <span className="vendor">
-                  {p.vendor} · {p.version}
-                </span>
-              </motion.article>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        {/* Категории-аккордеоны */}
+        <div className="acc-list">
+          {groups.map(({ category, items }) => {
+            // при поиске все совпавшие категории раскрыты принудительно
+            const open = searching || openCats.has(category);
+            return (
+              <section key={category} className="glass acc-group">
+                <button
+                  type="button"
+                  className="acc-head"
+                  onClick={() => toggleCat(category)}
+                  aria-expanded={open}
+                >
+                  <span className="acc-title">{category}</span>
+                  <span className="acc-count">{items.length}</span>
+                  <motion.span
+                    className="acc-chevron"
+                    animate={{ rotate: open ? 180 : 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    ▾
+                  </motion.span>
+                </button>
 
-        {visible.length === 0 && (
+                <AnimatePresence initial={false}>
+                  {open && (
+                    <motion.div
+                      className="acc-body"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <div className="plugins-grid">
+                        {items.map((p) => (
+                          <article key={p.id} className="glass plugin-card">
+                            <div className="plugin-meta">
+                              <h3>{p.name}</h3>
+                              {(p.pending || p.category === 'Новинка') && (
+                                <span className={`tag ${p.pending ? 'tag-soon' : 'tag-new'}`}>
+                                  {p.pending ? 'Скоро' : 'Новинка'}
+                                </span>
+                              )}
+                            </div>
+                            <span className="vendor">
+                              {p.vendor} · {p.version}
+                            </span>
+                          </article>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+            );
+          })}
+        </div>
+
+        {groups.length === 0 && (
           <motion.div
             className="glass empty-note"
             initial={{ opacity: 0 }}
@@ -155,7 +205,7 @@ export default function Plugins() {
         <div style={{ paddingBottom: 96 }} />
       </main>
 
-      <Footer compact />
+      <Footer />
     </PageTransition>
   );
 }

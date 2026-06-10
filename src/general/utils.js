@@ -28,6 +28,17 @@ export function getWeekDays() {
   });
 }
 
+/** 7 дней начиная с указанной даты — когда выбранный в календаре день
+    выходит за пределы ближайшей недели */
+export function getWeekFrom(startIso) {
+  const start = new Date(startIso + 'T00:00:00');
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return { iso: toIso(d), date: d.getDate(), dow: DOW_SHORT[d.getDay()] };
+  });
+}
+
 /** Месяц для календаря: offset от текущего. Возвращает заголовок и ячейки (null = пустая) */
 export function getMonth(offset = 0) {
   const now = new Date();

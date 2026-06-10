@@ -4,17 +4,17 @@ export const NAV_LINKS = [
   { to: '/', label: 'Главная' },
   { to: '/booking', label: 'Запись' },
   { to: '/plugins', label: 'Плагины' },
-  { to: '/profile', label: 'Мои записи' },
+  { to: '/profile', label: 'Профиль' },
 ];
 
 // bookable — услуга доступна для онлайн-записи на странице «Запись»
 export const SERVICES = [
-  { id: 'vocal',     name: 'Запись вокала',      price: 1500, hourly: true,  room: 'A', icon: '🎙️', bookable: true,  desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc euismod, mic preamp at lacinia tincidunt, est studio.' },
-  { id: 'mixing',    name: 'Сведение',           price: 4000, hourly: false, room: 'B', icon: '🎚️', bookable: false, desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce balance levels vitae, mix bus dapibus quam pretium.' },
-  { id: 'mastering', name: 'Мастеринг',          price: 2500, hourly: false, room: 'B', icon: '💿', bookable: false, desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec loudness target nec, finalize aliquet velit auctor.' },
-  { id: 'arrange',   name: 'Аранжировка',        price: 8000, hourly: false, room: 'B', icon: '🎛️', bookable: true,  desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer melody to beat varius, arrangement sodales orci.' },
-  { id: 'podcast',   name: 'Подкасты и озвучка', price: 1200, hourly: true,  room: 'A', icon: '🎧', bookable: true,  desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent voice over vel, podcast eleifend nibh maximus.' },
-  { id: 'produce',   name: 'Продюсирование',     price: null, hourly: false, room: 'A', icon: '🚀', bookable: false, desc: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi from demo to release, producer commodo posuere.' },
+  { id: 'vocal',     name: 'Запись вокала',      price: 1500, hourly: true,  icon: '🎙️', bookable: true,  desc: 'Пишем вокал на Neumann TLM 102 в тихой подготовленной комнате. Поможем с дублями, подскажем по подаче и соберём черновой микс сразу после сессии.' },
+  { id: 'mixing',    name: 'Сведение',           price: 4000, hourly: false, icon: '🎚️', bookable: false, desc: 'Балансы, частоты, динамика и пространство — доведём трек до уверенного звучания на любых системах, от наушников до клубного саба.' },
+  { id: 'mastering', name: 'Мастеринг',          price: 2500, hourly: false, icon: '💿', bookable: false, desc: 'Финальная полировка: громкость под стриминговые платформы, ширина и плотность без потери динамики. Отдаём версии под все площадки.' },
+  { id: 'arrange',   name: 'Аранжировка',        price: 8000, hourly: false, icon: '🎛️', bookable: true,  desc: 'Соберём аранжировку под ваш референс или с нуля: бит, гармония, структура и продакшн до состояния «можно записывать вокал».' },
+  { id: 'podcast',   name: 'Подкасты и озвучка', price: 1200, hourly: true,  icon: '🎧', bookable: true,  desc: 'Запись подкастов, озвучки и аудиокниг с чисткой дорожек от шумов, щелчков и лишних пауз. Готовые файлы — под монтаж или сразу в эфир.' },
+  { id: 'produce',   name: 'Продюсирование',     price: null, hourly: false, icon: '🚀', bookable: false, desc: 'Полный цикл: от идеи и демки до релиза. Поможем с концепцией, звуком, сведением и подготовкой трека к дистрибуции.' },
 ];
 
 export const BOOKABLE_SERVICES = SERVICES.filter((s) => s.bookable);
@@ -25,11 +25,13 @@ export const TIME_SLOTS = Array.from(
   (_, h) => `${String(h).padStart(2, '0')}:00`
 );
 
+// img: null → показывается заглушка. Когда появятся фотографии,
+// положи их в src/assets и импортируй сюда (img: dt770Photo)
 export const EQUIPMENT = [
-  { type: 'Наушники',        model: 'Beyerdynamic DT 770 Pro', icon: '🎧' },
-  { type: 'Звуковая карта',  model: 'Arturia MiniFuse 1',      icon: '🎛️' },
-  { type: 'Микрофон',        model: 'Neumann TLM 102',         icon: '🎙️' },
-  { type: 'MIDI-клавиатура', model: 'Arturia MiniLab 3',       icon: '🎹' },
+  { type: 'Наушники',        model: 'Beyerdynamic DT 770 Pro', img: null },
+  { type: 'Звуковая карта',  model: 'Arturia MiniFuse 1',      img: null },
+  { type: 'Микрофон',        model: 'Neumann TLM 102',         img: null },
+  { type: 'MIDI-клавиатура', model: 'Arturia MiniLab 3',       img: null },
 ];
 
 export const PLUGIN_CATEGORIES = [
@@ -85,9 +87,9 @@ export const HERO_STATS = [
 ];
 
 export const STUDIO_FEATURES = [
-  'Акустически подготовленные комнаты A и B',
-  'Микрофоны Neumann, AKG и Shure',
-  'Мониторинг Genelec и Yamaha',
+  'Акустически подготовленная комната',
+  'Микрофон Neumann TLM 102',
+  'Наушники Beyerdynamic DT 770 Pro',
   '120+ лицензионных плагинов',
 ];
 

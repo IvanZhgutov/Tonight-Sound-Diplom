@@ -801,6 +801,7 @@ textarea:focus-visible {
 .auth-card > p {
   text-align: center;
   font-size: .92rem;
+  margin-bottom: 30px;
 }
 
 .auth-form { display: grid; gap: 18px; }
@@ -1338,4 +1339,104 @@ button.nav-login {
   .auth-card { padding: 34px 22px; }
   .admin-actions { width: 100%; }
   .admin-actions .btn { flex: 1; }
+}
+
+/* ============================================================
+   Правки v3: прижатый футер, аккордеоны плагинов, фото оборудования
+   ============================================================ */
+
+/* --- футер всегда внизу страницы --- */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.page > main { flex: 1; }
+
+.page > .footer { margin-top: auto; }
+
+.auth-wrap { min-height: 0; } /* высоту теперь держит flex-раскладка */
+
+/* --- категории плагинов: выпадающие списки --- */
+.acc-list { display: grid; gap: 14px; margin-top: 28px; }
+
+.acc-group { overflow: hidden; }
+
+.acc-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 26px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background .2s;
+}
+
+.acc-head:hover { background: rgba(255, 255, 255, .03); }
+
+.acc-title {
+  font-family: var(--font-display);
+  font-size: .98rem;
+  flex: 1;
+}
+
+.acc-count {
+  font: 800 .78rem var(--font-body);
+  color: var(--cyan);
+  background: rgba(111, 227, 255, .1);
+  border: 1px solid rgba(111, 227, 255, .25);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.acc-chevron {
+  display: inline-block;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.acc-body { overflow: hidden; }
+
+.acc-body .plugins-grid {
+  margin-top: 0;
+  padding: 4px 26px 24px;
+}
+
+.acc-body .plugin-card {
+  background: rgba(8, 14, 38, .45);
+}
+
+.search-count {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* --- карточки оборудования с фото --- */
+.equip-card .img-placeholder.photo,
+.equip-photo {
+  min-height: 160px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  margin-bottom: 18px;
+  object-fit: cover;
+}
+
+.equip-photo { height: 160px; border: 1px solid var(--glass-border); }
+
+@media (max-width: 600px) {
+  .acc-head { padding: 16px 18px; }
+  .acc-body .plugins-grid { padding: 4px 18px 18px; }
 }
