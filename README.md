@@ -1,59 +1,110 @@
-# Tonight Sound — студия звукозаписи
+# Tonight Sound API (Laravel 12)
 
-Космически-синий dark mode, глассморфизм, React.
+REST API для студии звукозаписи: Sanctum Bearer-токены, MySQL.
 
-## Стек
-- **React 18** + Vite
-- **react-router-dom** — страницы: /, /booking, /plugins, /login, /register, /profile, /admin
-- **Framer Motion** — переходы страниц, stagger-карточки, анимации календаря и форм
-- **Zustand (persist)** — авторизация, записи, черновик формы и запросы плагинов в localStorage
+## Установка
 
-## Запуск
+Этот архив — только авторский код поверх свежего скелета Laravel 12
+(vendor не входит). Развёртывание:
+
 ```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # продакшен-сборка в dist/
+# 1. Свежий Laravel 12
+composer create-project laravel/laravel:^12.0 tonight-sound-api
+cd tonight-sound-api
+
+# 2. Sanctum + routes/api.php
+php artisan install:api
+
+# 3. Скопировать файлы этого архива поверх проекта (с заменой):
+#    app/ bootstrap/app.php config/cors.php database/ routes/api.php
+
+# 4. Настроить .env по образцу .env.api.example (база tonight_sound должна существовать)
+
+# 5. Миграции и данные
+php artisan migrate --seed
+
+# 6. Запуск
+php artisan serve   # http://localhost:8000
 ```
 
-## Админ-панель
-Вход на странице /login с мок-учёткой (см. general/constants.js):
-- email: `admin@tonightsound.studio`
-- пароль: `admin123`
+Сидер создаёт каталог услуг, 26 плагинов и админа:
+`admin@tonightsound.studio` / `admin123` (сменить в проде!).
 
-В админке: подтверждение/отклонение заявок на запись и обработка
-запросов плагинов («Добавлен» → плагин получает тег «Новинка» в общем списке).
+## Эндпоинты
 
-## Структура
+### Публичные
+| Метод | URL | Описание |
+|---|---|---|
+| POST | /api/auth/register | `{name, email, phone?, password, password_confirmation}` → user + token |
+| POST | /api/auth/login | `{email, password}` → user + token |
+| GET | /api/services | каталог услуг, `?bookable=1` — только для записи |
+| GET | /api/plugins | плагины, `?search=` `?category=` |
+| POST | /api/plugins/requests | `{name}` — «Не нашли плагин?» (throttle 5/мин) |
+| GET | /api/availability?date=YYYY-MM-DD | занятые часы: `{date, busy: ["16:00", ...]}` |
+
+### Авторизованные (заголовок `Authorization: Bearer <token>`)
+| Метод | URL | Описание |
+|---|---|---|
+| GET | /api/auth/me | текущий пользователь |
+| POST | /api/auth/logout | отзыв текущего токена |
+| GET | /api/bookings | мои записи (с услугой) |
+| POST | /api/bookings | `{date, times[], service, telegram, comment?}` |
+| DELETE | /api/bookings/{id} | отмена своей будущей записи |
+
+### Админ (is_admin = true)
+| Метод | URL | Описание |
+|---|---|---|
+| GET | /api/admin/stats | счётчики дашборда |
+| GET | /api/admin/bookings | все заявки, `?status=pending` |
+| PATCH | /api/admin/bookings/{id}/status | `{status: confirmed\|declined}` |
+| GET | /api/admin/plugin-requests | запросы артистов |
+| PATCH | /api/admin/plugins/{id}/approve | запрос → «Новинка» |
+| DELETE | /api/admin/plugins/{id} | отклонить запрос |
+
+## Бизнес-логика
+
+- **Создание записи**: цена считается на сервере (`price × кол-во часов` для
+  почасовых услуг), часы проверяются на конфликт с не-отклонёнными записями
+  этой даты внутри транзакции с `lockForUpdate` — двойное бронирование
+  одного часа невозможно даже при одновременных запросах.
+- **Занятость слотов** больше не имитируется хэшем, как на фронте, —
+  `/api/availability` отдаёт реальные занятые часы.
+- **Статусы записи**: pending → confirmed / declined (enum
+  `App\Enums\BookingStatus`); прошедшие даты менять нельзя.
+- **Плагины**: запрос артиста создаёт плагин со статусом `requested`
+  (категория «Скоро»); одобрение админом переводит в `new` («Новинка»);
+  дубликаты по имени отсекаются без учёта регистра.
+- Все ошибки и валидация — JSON (middleware `ForceJsonResponse`),
+  сообщения валидации на русском.
+
+## Пример: создать запись
+
+```http
+POST /api/bookings
+Authorization: Bearer 1|abc...
+Content-Type: application/json
+
+{
+  "date": "2026-06-20",
+  "times": ["16:00", "17:00"],
+  "service": "vocal",
+  "telegram": "@username",
+  "comment": "Референс пришлю в личку"
+}
 ```
-src/
-  assets/         # fonts, icons (пока пусто — шрифты через Google Fonts)
-  components/     # Header (с бургер-меню), Footer, Equalizer, PageTransition,
-                  # ProtectedRoute, AdminRoute...
-  pages/          # Home, Booking, Plugins, Login, Register, Profile, Admin
-  hooks/          # useDocumentTitle
-  store/          # authStore, bookingStore, pluginStore (Zustand)
-  general/        # constants.js, utils.js
-  styles/         # index.css
+
+Ответ `201`:
+```json
+{
+  "message": "Запись создана! Мы свяжемся с вами в Telegram для подтверждения.",
+  "booking": {
+    "id": 1, "date": "2026-06-20", "times": ["16:00","17:00"],
+    "total": 3000, "status": "pending", "is_past": false, ...
+  }
+}
 ```
 
-## Что работает
-- Запись: день выбирается в недельном виде или в календаре (после выбора
-  календарь сворачивается; если день дальше недели — неделя начинается с него);
-  время — мультивыбор часов 00:00–23:00 (3 ряда, дальше скролл); Telegram ID.
-- Черновик формы хранится в bookingStore — выбор не теряется после
-  ухода на /login или перезагрузки страницы.
-- Без авторизации кнопка «Подтвердить запись» disabled с подсказкой войти.
-- Профиль (/profile): записи пользователя, отмена, статусы, кнопка «Выйти».
-- Плагины: категории-аккордеоны + живой поиск (раскрывает совпадения),
-  запрошенный плагин появляется с тегом «Скоро», после одобрения админом — «Новинка».
-- Мобильный адаптив: бургер-меню, перестроенные сетки и панели.
-
-## Примечание
-Авторизация и админ-доступ — мок на localStorage (пароли в открытом виде).
-При подключении бэкенда заменяется store/authStore.js и константа
-ADMIN_CREDENTIALS.
-
-## Фото оборудования
-Карточки на главной готовы под фотографии: положи файлы в src/assets
-и укажи их в поле img в EQUIPMENT (general/constants.js) — заглушка
-заменится автоматически.
+## Следующие шаги
+- Подключение React-фронта (заменить zustand-логику на fetch к API).
+- Уведомления в Telegram о новых заявках (бот + очередь).
+- Тесты: Pest/PHPUnit на бронирование и конфликты слотов.
