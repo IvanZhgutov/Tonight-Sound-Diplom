@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\AnalyticsController;
 use App\Http\Controllers\Api\Admin\BookingAdminController;
 use App\Http\Controllers\Api\Admin\ClientAdminController;
 use App\Http\Controllers\Api\Admin\PluginAdminController;
+use App\Http\Controllers\Api\Admin\ServiceAdminController;
 use App\Http\Controllers\Api\Admin\StatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AvailabilityController;
@@ -62,6 +63,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/clients/{client}/notes', [ClientAdminController::class, 'storeNote']);
         Route::delete('/notes/{note}', [ClientAdminController::class, 'destroyNote']);
         Route::get('/analytics', [AnalyticsController::class, 'index']);
+
+        // Каталог: цены услуг и управление плагинами
+        Route::patch('/services/{service}', [ServiceAdminController::class, 'update']);
+        Route::post('/plugins', [PluginAdminController::class, 'store']);
 
         Route::get('/plugin-requests', [PluginAdminController::class, 'requests']);
         Route::patch('/plugins/{plugin}/approve', [PluginAdminController::class, 'approve']);

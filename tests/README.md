@@ -63,9 +63,11 @@ php artisan serve   # http://localhost:8000
 | POST | /api/admin/clients/{id}/notes | добавить заметку |
 | DELETE | /api/admin/notes/{id} | удалить заметку |
 | GET | /api/admin/analytics | тайлы, выручка по месяцам, услуги, загрузка |
+| PATCH | /api/admin/services/{id} | изменить цену услуги (`{price: int\|null}`) |
+| POST | /api/admin/plugins | добавить плагин (`{name, vendor?, version?, category}`) |
 | GET | /api/admin/plugin-requests | запросы артистов |
 | PATCH | /api/admin/plugins/{id}/approve | запрос → «Новинка» |
-| DELETE | /api/admin/plugins/{id} | отклонить запрос |
+| DELETE | /api/admin/plugins/{id} | отклонить запрос / удалить из каталога |
 
 ### Воронка записи (state machine в BookingStatus)
 ```
