@@ -29,13 +29,38 @@ export const PLUGIN_CATEGORIES = [
 export const BOOKING_STATUS = {
   pending:   { label: 'Ожидает подтверждения', className: 'wait' },
   confirmed: { label: 'Подтверждена',          className: 'ok' },
+  completed: { label: 'Завершена · к оплате',  className: 'completed' },
+  paid:      { label: 'Оплачена',              className: 'paid' },
   declined:  { label: 'Отклонена',             className: 'declined' },
+  no_show:   { label: 'Не пришёл',             className: 'noshow' },
   done:      { label: 'Завершена',             className: 'done' },
 };
 
-/** Статус для отображения: прошедшие даты считаем завершёнными */
-export const displayStatus = (booking) =>
-  booking.is_past ? BOOKING_STATUS.done : (BOOKING_STATUS[booking.status] ?? BOOKING_STATUS.pending);
+/** Статус для клиента: прошедшие неотработанные записи показываем «Завершена» */
+export const displayStatus = (booking) => {
+  if (booking.is_past && ['pending', 'confirmed'].includes(booking.status)) {
+    return BOOKING_STATUS.done;
+  }
+  return BOOKING_STATUS[booking.status] ?? BOOKING_STATUS.pending;
+};
+
+/** Воронка CRM: действия админа для каждого статуса записи */
+export const PIPELINE_ACTIONS = {
+  pending: [
+    { to: 'confirmed', label: 'Подтвердить', primary: true },
+    { to: 'declined', label: 'Отклонить' },
+  ],
+  confirmed: [
+    { to: 'completed', label: 'Завершена', primary: true },
+    { to: 'no_show', label: 'Не пришёл' },
+    { to: 'declined', label: 'Отклонить' },
+  ],
+  completed: [
+    { to: 'paid', label: 'Оплачено', primary: true },
+  ],
+};
+
+export const MONTH_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 
 export const HERO_STATS = [
   { value: '6 лет', label: 'работы студии' },

@@ -3,7 +3,22 @@
    Космически-синий dark mode + глассморфизм
    ============================================================ */
 
+
 :root {
+  --bg: #050917;
+  --bg-2: #0a1230;
+  --ink: #e9efff;
+  --muted: #8b97c2;
+  --blue: #4d7cff;
+  --cyan: #6fe3ff;
+  --violet: #7b6cff;
+
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-strong: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(150, 180, 255, 0.16);
+  --field-bg: rgba(8, 14, 38, .6);
+  --field-bg-soft: rgba(8, 14, 38, .5);
+
   --radius: 20px;
   --radius-sm: 12px;
   --container: 1160px;
@@ -11,6 +26,7 @@
   --font-display: "Unbounded", sans-serif;
   --font-body: "Manrope", sans-serif;
 }
+
 
 /* Темная тема (по умолчанию) */
 body,
@@ -1519,4 +1535,547 @@ button.nav-login {
 @media (max-width: 600px) {
   .acc-head { padding: 16px 18px; }
   .acc-body .plugins-grid { padding: 4px 18px 18px; }
+}
+/* ============================================================
+    Правки v4: интеграция с API
+   ============================================================ */
+
+/* индикатор загрузки: бегущие точки */
+.loading-dots {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.loading-dots::after {
+  content: "";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%  { content: "..."; }
+}
+
+/* слоты во время проверки занятости */
+.slots-loading { opacity: .55; pointer-events: none; }
+
+/* ============================================================
+    CRM: клиенты, воронка, аналитика
+   ============================================================ */
+
+/* --- новые статусы воронки --- */
+.status.completed {
+  color: #9db4ff;
+  border-color: rgba(157, 180, 255, .35);
+  background: rgba(157, 180, 255, .08);
+}
+
+.status.paid {
+  color: #7cffb8;
+  border-color: rgba(124, 255, 184, .5);
+  background: rgba(124, 255, 184, .14);
+}
+
+.status.noshow {
+  color: #c8b29a;
+  border-color: rgba(200, 178, 154, .35);
+  background: rgba(200, 178, 154, .08);
+}
+
+.sub-tabs { margin-bottom: 22px; }
+.admin-tabs a { text-decoration: none; }
+
+/* --- список клиентов --- */
+.client-row {
+  grid-template-columns: 1.3fr 1fr 1.4fr auto;
+  cursor: pointer;
+  transition: border-color .2s, transform .2s;
+}
+
+.client-row:hover {
+  border-color: rgba(150, 180, 255, .4);
+  transform: translateY(-2px);
+}
+
+.client-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.client-id h3 { font-size: .95rem; margin-bottom: 2px; }
+.client-id p { font-size: .82rem; overflow: hidden; text-overflow: ellipsis; }
+
+.avatar-sm { width: 44px; height: 44px; font-size: .85rem; flex: none; }
+
+.client-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.client-stats {
+  display: flex;
+  gap: 18px;
+  font-size: .8rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.client-stats strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: .9rem;
+  color: var(--ink);
+}
+
+.client-stats .debt strong { color: #ffd980; }
+
+.client-arrow { color: var(--muted); font-size: 1.1rem; }
+
+.back-link {
+  display: inline-block;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.back-link:hover { color: var(--ink); }
+
+/* --- карточка клиента --- */
+.crm-panel { padding: 22px 26px; }
+.crm-panel h3 { margin-bottom: 16px; }
+
+.panel-sub {
+  font: 600 .75rem var(--font-body);
+  color: var(--muted);
+  margin-left: 8px;
+}
+
+.crm-section { margin-top: 36px; }
+.crm-section h2 { font-size: 1.15rem; margin-bottom: 16px; }
+
+.stat-debt { color: #ffd980 !important; }
+
+/* теги */
+.tags-editor { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.tag-removable {
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+
+.tag-removable:hover { border-color: #ff8e9e; color: #ff8e9e; }
+
+.tag-form input {
+  width: 130px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--glass-border);
+  background: transparent;
+  color: var(--ink);
+  font: 700 .78rem var(--font-body);
+}
+
+.tag-form input:focus { outline: none; border-color: var(--blue); border-style: solid; }
+
+/* заметки */
+.note-form { display: flex; gap: 12px; align-items: flex-end; }
+
+.note-form textarea {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+  background: var(--field-bg);
+  color: var(--ink);
+  font: 500 .92rem var(--font-body);
+  resize: vertical;
+}
+
+.note-form textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(77, 124, 255, .25);
+}
+
+.notes-list { display: grid; gap: 12px; margin-top: 16px; }
+
+.note-item { padding: 16px 20px; }
+.note-item p { color: var(--ink); font-size: .92rem; }
+
+.note-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: .78rem;
+  color: var(--muted);
+}
+
+.note-delete {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: 700 .78rem var(--font-body);
+  cursor: pointer;
+}
+
+.note-delete:hover { color: #ff8e9e; }
+
+.notes-empty { font-size: .88rem; margin-top: 12px; }
+
+/* --- аналитика --- */
+.stats-4 { grid-template-columns: repeat(4, 1fr); }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 180px;
+  padding-top: 8px;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+}
+
+.bar {
+  width: 100%;
+  max-width: 48px;
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(180deg, var(--cyan), var(--blue));
+  box-shadow: 0 0 14px rgba(77, 124, 255, .3);
+}
+
+.bar-alt { background: linear-gradient(180deg, var(--violet), var(--blue)); }
+
+.bar-value {
+  font: 700 .68rem var(--font-body);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bar-label {
+  font: 800 .72rem var(--font-body);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hbar-list { display: grid; gap: 14px; }
+
+.hbar-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 140px;
+  align-items: center;
+  gap: 14px;
+}
+
+.hbar-name { font: 700 .85rem var(--font-body); }
+
+.hbar-track {
+  height: 12px;
+  border-radius: 99px;
+  background: var(--field-bg);
+  border: 1px solid var(--glass-border);
+  overflow: hidden;
+}
+
+.hbar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+}
+
+.hbar-meta { font-size: .8rem; color: var(--muted); text-align: right; }
+
+/* --- адаптив CRM --- */
+@media (max-width: 960px) {
+  .stats-4 { grid-template-columns: 1fr 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .client-row { grid-template-columns: 1fr; }
+  .client-arrow { display: none; }
+  .hbar-row { grid-template-columns: 1fr; gap: 6px; }
+  .hbar-meta { text-align: left; }
+}
+
+@media (max-width: 600px) {
+  .stats-4 { grid-template-columns: 1fr; }
+  .note-form { flex-direction: column; align-items: stretch; }
+  .bar-chart { gap: 6px; height: 150px; }
+  .bar-value { font-size: .6rem; }
+}
+
+/* --- режим администратора в шапке --- */
+.logo-static { cursor: default; }
+
+.nav-admin {
+  padding: 8px 16px;
+  border-radius: 999px;
+}
+
+.nav-admin.active {
+  color: var(--ink);
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+}
+
+/* --- CRM: каталог (цены услуг + плагины) --- */
+.services-list { display: grid; gap: 6px; }
+
+.service-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px dashed rgba(150, 180, 255, .14);
+}
+
+.service-row:last-child { border-bottom: none; }
+
+.service-row-info { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.service-row-icon { font-size: 1.3rem; }
+.service-row-info h4 { font: 700 .92rem var(--font-body); }
+.service-row-info p { font-size: .78rem; }
+
+.service-row-price { display: flex; align-items: center; gap: 10px; }
+
+.price-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+  background: var(--field-bg);
+}
+
+.price-input input {
+  width: 100px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font: 700 .92rem var(--font-body);
+  text-align: right;
+}
+
+.price-input input:focus { outline: none; }
+
+/* убираем стрелки у number-инпута */
+.price-input input::-webkit-outer-spin-button,
+.price-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.price-input input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+.price-input span { color: var(--muted); font-weight: 700; }
+
+.btn-save { padding: 9px 16px; font-size: .82rem; }
+
+.add-plugin-form {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr .7fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.plugin-filter {
+  width: 200px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--field-bg);
+  color: var(--ink);
+  font: 500 .85rem var(--font-body);
+  margin-bottom: 16px;
+}
+
+.plugin-filter:focus { outline: none; border-color: var(--blue); }
+
+.plugin-manage-list { display: grid; }
+
+.plugin-manage-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px dashed rgba(150, 180, 255, .12);
+}
+
+.plugin-manage-row:last-child { border-bottom: none; }
+
+.plugin-manage-name h4 { font: 700 .9rem var(--font-body); }
+.plugin-manage-name p { font-size: .78rem; }
+
+@media (max-width: 960px) {
+  .add-plugin-form { grid-template-columns: 1fr 1fr; }
+  .add-plugin-form .btn { grid-column: 1 / -1; }
+}
+
+@media (max-width: 600px) {
+  .service-row { flex-direction: column; align-items: stretch; }
+  .service-row-price { justify-content: space-between; }
+  .add-plugin-form { grid-template-columns: 1fr; }
+  .plugin-manage-row { grid-template-columns: 1fr auto; }
+  .plugin-manage-row .tag { display: none; }
+  .plugin-filter { width: 130px; }
+}
+
+/* ============================================================
+    Светлая тема + переключатель + страховка футера
+   ============================================================ */
+
+/* --- страховка прижатого футера: .page сам держит высоту экрана,
+       даже если flex на #root по какой-то причине не сработал --- */
+.page {
+  min-height: calc(100vh - 86px); /* высота шапки с отступом */
+  min-height: calc(100dvh - 86px);
+}
+
+/* --- плавающая кнопка темы --- */
+.theme-toggle {
+  position: fixed;
+  top: 25px;
+  right: 28px;
+  z-index: 60;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform .25s ease, border-color .2s ease;
+}
+
+.theme-toggle:hover {
+  transform: rotate(20deg) scale(1.08);
+  border-color: rgba(150, 180, 255, .45);
+}
+
+/* шапка по центру шире — опускаем кнопку под неё, чтобы не наезжала */
+@media (max-width: 1380px) {
+  .theme-toggle { top: 96px; }
+}
+
+/* на мобильных кнопки нет — переключатель в бургер-меню */
+@media (max-width: 960px) {
+  .theme-toggle { display: none; }
+}
+
+.mobile-theme {
+  border-top: 1px solid var(--glass-border);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.mobile-theme button {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: 700 .95rem var(--font-body);
+  cursor: pointer;
+}
+
+.mobile-theme button:hover { color: var(--ink); }
+
+/* --- светлая тема --- */
+/* data-theme стоит на <html>, поэтому переопределяем переменные прямо на нём */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #edf2fd;
+  --bg-2: #d9e4fb;
+  --ink: #141c42;
+  --muted: #5b689a;
+  --cyan: #0a93b5;
+  --glass: rgba(255, 255, 255, .55);
+  --glass-strong: rgba(255, 255, 255, .82);
+  --glass-border: rgba(70, 100, 190, .22);
+  --field-bg: rgba(255, 255, 255, .72);
+  --field-bg-soft: rgba(255, 255, 255, .55);
+}
+
+[data-theme="light"] .cosmos {
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+}
+
+[data-theme="light"] .cosmos::before { opacity: .3; }
+[data-theme="light"] .cosmos::after { opacity: .25; }
+
+/* статусы и сообщения: контрастные цвета на светлом фоне */
+[data-theme="light"] .status.ok,
+[data-theme="light"] .status.paid,
+[data-theme="light"] .tag-new {
+  color: #0b8a55;
+  border-color: rgba(11, 138, 85, .4);
+  background: rgba(11, 138, 85, .08);
+}
+
+[data-theme="light"] .status.wait,
+[data-theme="light"] .tag-soon {
+  color: #9a6b00;
+  border-color: rgba(154, 107, 0, .4);
+  background: rgba(154, 107, 0, .08);
+}
+
+[data-theme="light"] .status.completed {
+  color: #3554c9;
+  border-color: rgba(53, 84, 201, .4);
+  background: rgba(53, 84, 201, .08);
+}
+
+[data-theme="light"] .status.declined {
+  color: #c43b54;
+  border-color: rgba(196, 59, 84, .4);
+  background: rgba(196, 59, 84, .08);
+}
+
+[data-theme="light"] .status.noshow {
+  color: #8a6a3f;
+  border-color: rgba(138, 106, 63, .4);
+  background: rgba(138, 106, 63, .08);
+}
+
+[data-theme="light"] .form-success,
+[data-theme="light"] .success-banner { color: #0b8a55; }
+[data-theme="light"] .success-banner { border-color: rgba(11, 138, 85, .35); }
+
+[data-theme="light"] .form-error { color: #c43b54; }
+
+[data-theme="light"] .btn-logout {
+  color: #c43b54;
+  border-color: rgba(196, 59, 84, .35);
+}
+
+[data-theme="light"] .client-stats .debt strong,
+[data-theme="light"] .stat-debt { color: #9a6b00 !important; }
+
+[data-theme="light"] .note-delete:hover { color: #c43b54; }
+[data-theme="light"] .tag-removable:hover { border-color: #c43b54; color: #c43b54; }
+
+/* мягче неоновые свечения на светлом */
+[data-theme="light"] .btn-primary { box-shadow: 0 8px 24px rgba(77, 124, 255, .25); }
+[data-theme="light"] .logo-mark { box-shadow: 0 0 14px rgba(77, 124, 255, .35); }
+[data-theme="light"] .avatar { box-shadow: 0 0 16px rgba(77, 124, 255, .3); }
+[data-theme="light"] .day.selected,
+[data-theme="light"] .slot.selected,
+[data-theme="light"] .cal-cell.selected {
+  background: linear-gradient(135deg, rgba(77, 124, 255, .18), rgba(123, 108, 255, .12));
 }

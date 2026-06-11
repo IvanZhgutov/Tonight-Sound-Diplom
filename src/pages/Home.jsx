@@ -110,7 +110,7 @@ export default function Home() {
         {/* О студии */}
         <section className="section">
           <div className="container about">
-            <Reveal className='photo-studio-container'>
+            <Reveal>
               <ImagePlaceholder label="Фото студии" variant="tall" />
             </Reveal>
             <Reveal delay={0.1}>

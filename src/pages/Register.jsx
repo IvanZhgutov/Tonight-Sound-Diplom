@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Footer from '../components/Footer';
 import { useAuthStore } from '../store/authStore';
+import { formatPhoneRu, phoneDigits } from '../general/utils';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -12,6 +13,7 @@ export default function Register() {
   useDocumentTitle('Регистрация');
 
   const register = useAuthStore((s) => s.register);
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from ?? '/profile';
@@ -39,7 +41,7 @@ export default function Register() {
 
     if (!form.name.trim()) return setError('Укажи имя');
     if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return setError('Похоже, в email опечатка');
-    if (!form.phone.trim()) return setError('Укажи телефон');
+    if (phoneDigits(form.phone).length !== 11) return setError('Укажи номер телефона полностью');
     if (form.password.length < MIN_PASSWORD_LENGTH)
       return setError(`Пароль должен быть не короче ${MIN_PASSWORD_LENGTH} символов`);
     if (form.password !== form.password2) return setError('Пароли не совпадают');
@@ -57,6 +59,10 @@ export default function Register() {
     if (!result.ok) return setError(result.message);
     navigate(from, { replace: true });
   };
+
+  if (user) {
+    return <Navigate to="/profile" replace />;
+  }
 
   return (
     <PageTransition>
@@ -96,9 +102,13 @@ export default function Register() {
               <input
                 id="phone"
                 type="tel"
-                placeholder="+48 ___ ___ ___"
+                inputMode="numeric"
+                placeholder="+7 (___)-___-__-__"
                 value={form.phone}
-                onChange={update('phone')}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, phone: formatPhoneRu(e.target.value) }));
+                  setError('');
+                }}
               />
             </div>
             <div className="field">

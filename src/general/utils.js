@@ -90,7 +90,6 @@ export function hoursWord(n) {
 
 /** Дата записи для карточки: { day: 17, caption: "июня, ср" } */
 export function bookingDateParts(iso) {
-  if (!iso) return { day: '?', caption: 'неизвестно' };
   const d = new Date(iso + 'T00:00:00');
   return {
     day: d.getDate(),
@@ -110,3 +109,21 @@ export function initials(name = '') {
     .map((w) => w[0].toUpperCase())
     .join('') || '∗';
 }
+
+/** Маска телефона: цифры → "+7 (XXX)-XXX-XX-XX" */
+export function formatPhoneRu(raw) {
+  let d = raw.replace(/\D/g, '');
+  if (d.startsWith('7') || d.startsWith('8')) d = d.slice(1);
+  d = d.slice(0, 10);
+  if (!d) return '';
+
+  let out = '+7 (' + d.slice(0, 3);
+  if (d.length >= 3) out += ')';
+  if (d.length > 3) out += '-' + d.slice(3, 6);
+  if (d.length > 6) out += '-' + d.slice(6, 8);
+  if (d.length > 8) out += '-' + d.slice(8, 10);
+  return out;
+}
+
+/** Только цифры из строки (для валидации: полный номер = 11 цифр с семёркой) */
+export const phoneDigits = (value) => value.replace(/\D/g, '');

@@ -28,8 +28,10 @@ export default function Profile() {
   }, [fetchBookings]);
 
   const handleLogout = async () => {
+    // Сначала уходим с защищённого роута, потом чистим сессию —
+    // иначе ProtectedRoute успевает перебросить на /login
+    navigate('/', { replace: true });
     await logout();
-    navigate('/');
   };
 
   return (

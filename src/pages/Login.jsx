@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import Footer from '../components/Footer';
@@ -10,6 +10,7 @@ export default function Login() {
   useDocumentTitle('Вход');
 
   const login = useAuthStore((s) => s.login);
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,6 +35,11 @@ export default function Login() {
     if (!result.ok) return setError(result.message);
     navigate(result.user?.is_admin ? '/admin' : from, { replace: true });
   };
+
+  // Уже вошёл — на /login делать нечего
+  if (user) {
+    return <Navigate to="/profile" replace />;
+  }
 
   return (
     <PageTransition>
