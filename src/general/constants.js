@@ -13,13 +13,12 @@ export const TIME_SLOTS = Array.from(
   (_, h) => `${String(h).padStart(2, '0')}:00`
 );
 
-// img: null → показывается заглушка. Когда появятся фотографии,
-// положи их в src/assets и импортируй сюда (img: dt770Photo)
+// Фото лежат в public/images/equipment/ — Vite отдаёт их напрямую
 export const EQUIPMENT = [
-  { type: 'Наушники',        model: 'Beyerdynamic DT 770 Pro', img: null },
-  { type: 'Звуковая карта',  model: 'Arturia MiniFuse 1',      img: null },
-  { type: 'Микрофон',        model: 'Neumann TLM 102',         img: null },
-  { type: 'MIDI-клавиатура', model: 'Arturia MiniLab 3',       img: null },
+  { type: 'Наушники',        model: 'Beyerdynamic DT 770 Pro', img: '/images/equipment/dt770pro.webp' },
+  { type: 'Звуковая карта',  model: 'Arturia MiniFuse 1',      img: '/images/equipment/arturia-minifuse-1.webp' },
+  { type: 'Микрофон',        model: 'Neumann TLM 102',         img: '/images/equipment/neuman-tlm-102.webp' },
+  { type: 'MIDI-клавиатура', model: 'Arturia MiniLab 3',       img: '/images/equipment/arturia-minilab-3.webp' },
 ];
 
 export const PLUGIN_CATEGORIES = [
