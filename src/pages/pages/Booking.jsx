@@ -323,7 +323,7 @@ export default function Booking() {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor="telegram">Ваш ID в VK (для связи)</label>
+                  <label htmlFor="telegram">Ваш ID в Telegram (для связи)</label>
                   <input
                     id="telegram"
                     type="text"

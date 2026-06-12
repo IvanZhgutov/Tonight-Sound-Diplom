@@ -62,7 +62,7 @@ export default function Profile() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              Запись создана! Мы свяжемся с тобой в VK для подтверждения.
+              Запись создана! Мы свяжемся с тобой в Telegram для подтверждения.
             </motion.div>
           )}
         </AnimatePresence>

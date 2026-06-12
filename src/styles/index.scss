@@ -1992,11 +1992,13 @@ button.nav-login {
   background: linear-gradient(135deg, rgba(77, 124, 255, .18), rgba(123, 108, 255, .12));
 }
 
-/* ============================================================
-   Слайдер оборудования + слайдер фото студии
-   ============================================================ */
 
-/* --- Слайдер оборудования --- */
+
+
+
+
+
+
 
 /* ============================================================
    Слайдер оборудования + слайдер фото студии
@@ -2007,48 +2009,50 @@ button.nav-login {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 52px; /* место под точки */
+  gap: 16px;
+  padding: 12px 0 52px; /* место для точек */
   user-select: none;
 }
 
-.equip-slider-track {
+.equip-slider-viewport {
   flex: 1;
-  display: flex;
-  gap: 16px;
-  align-items: stretch;
   overflow: hidden;
+  min-width: 0;
   cursor: grab;
-  min-height: 420px;
 }
 
-.equip-slider-track:active { cursor: grabbing; }
+.equip-slider-viewport:active { cursor: grabbing; }
 
-/* Каждая карточка занимает долю через flex.
-   Framer Motion анимирует flex от 1 → 1.75 и обратно.
-   contain: strict помогает браузеру не перекрашивать соседей. */
+.equip-slider-row {
+  display: flex;
+  gap: 20px;
+  will-change: transform;
+}
+
 .equip-slide {
-  flex: 1;
-  min-width: 0;
+  flex: none;
   border-radius: var(--radius);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  contain: layout style;
+}
+
+.equip-slide-active {
+  box-shadow: 0 0 40px rgba(77, 124, 255, .25);
+  border-color: rgba(150, 180, 255, .4);
 }
 
 .equip-slide-img {
   width: 100%;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
-  flex-shrink: 0;
-  /* transform управляется Framer Motion */
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .equip-slide-placeholder {
   width: 100%;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 4 / 3;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, rgba(77,124,255,.12), rgba(123,108,255,.08));
@@ -2056,11 +2060,11 @@ button.nav-login {
   font-size: .8rem;
   letter-spacing: .12em;
   text-transform: uppercase;
-  flex-shrink: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .equip-slide-info {
-  padding: 18px 20px 22px;
+  padding: 20px 22px 24px;
   flex: 1;
 }
 
@@ -2079,7 +2083,7 @@ button.nav-login {
   color: var(--ink);
 }
 
-/* --- Кнопки-стрелки --- */
+/* Стрелки слайдера */
 .slider-btn {
   flex: none;
   width: 46px;
@@ -2088,25 +2092,24 @@ button.nav-login {
   border: 1px solid var(--glass-border);
   background: var(--glass);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   color: var(--ink);
-  font-size: 1.7rem;
+  font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
   display: grid;
   place-items: center;
   transition: border-color .2s, background .2s, transform .2s;
+  z-index: 2;
   align-self: center;
-  margin-bottom: 52px; /* компенсируем padding-bottom трека */
 }
 
 .slider-btn:hover {
   border-color: rgba(150, 180, 255, .5);
   background: var(--glass-strong);
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
-/* --- Точки-индикаторы --- */
+/* Точки */
 .slider-dots {
   position: absolute;
   bottom: 0;
@@ -2124,12 +2127,12 @@ button.nav-login {
   background: var(--glass-border);
   cursor: pointer;
   padding: 0;
-  transition: background .25s, width .3s;
+  transition: background .2s, transform .2s, width .25s;
 }
 
 .slider-dot.active {
   background: var(--blue);
-  width: 26px;
+  width: 24px;
   border-radius: 99px;
   box-shadow: 0 0 10px rgba(77, 124, 255, .6);
 }
@@ -2153,6 +2156,7 @@ button.nav-login {
   pointer-events: none;
 }
 
+/* Точки-индикаторы фото студии */
 .studio-photo-bar {
   position: absolute;
   bottom: 14px;
@@ -2180,22 +2184,24 @@ button.nav-login {
   border-radius: 99px;
 }
 
-/* --- Адаптив слайдера --- */
+/* --- Адаптив --- */
 @media (max-width: 960px) {
-  /* На планшете боковые карточки совсем маленькие — почти не видны */
-  .equip-slider-track { min-height: 300px; }
-  .equip-slider { gap: 10px; }
-  .nav-admin { display: none; }
+  /* На планшете/мобиле видна одна карточка — ширину считает JS */
 }
 
 @media (max-width: 600px) {
-  /* На мобиле боковых карточек нет: центральная занимает всё */
-  .equip-slider { gap: 8px; }
-  .slider-btn { width: 38px; height: 38px; font-size: 1.3rem; margin-bottom: 52px; }
-  .equip-slider-track { gap: 0; min-height: 260px; }
-  /* Боковые карточки схлопываются до нуля */
-  .equip-slide { overflow: hidden; }
+  .equip-slider { gap: 10px; }
+  .slider-btn { width: 38px; height: 38px; font-size: 1.3rem; }
+  .equip-slide-img,
+  .equip-slide-placeholder { aspect-ratio: 3 / 2; }
 }
+
+
+
+
+
+
+
 
 /* --- бургер-меню: пункты с иконкой (тема, выход) --- */
 .mobile-theme button,
@@ -2350,4 +2356,10 @@ button.nav-login {
   height: 20px;
   z-index: 1;
   transform: translateY(-65%);
+}
+
+
+@media (max-width: 960px) {
+  .nav-auth .nav-login, 
+  .nav-auth .btn-primary { display: none; }
 }

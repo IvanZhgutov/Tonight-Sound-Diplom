@@ -28,7 +28,7 @@ export const PLUGIN_CATEGORIES = [
 export const BOOKING_STATUS = {
   pending:   { label: 'Ожидает подтверждения', className: 'wait' },
   confirmed: { label: 'Подтверждена',          className: 'ok' },
-  completed: { label: 'Завершена · к оплате',  className: 'completed' },
+  completed: { label: 'Завершена',             className: 'completed' },
   paid:      { label: 'Оплачена',              className: 'paid' },
   declined:  { label: 'Отклонена',             className: 'declined' },
   no_show:   { label: 'Не пришёл',             className: 'noshow' },
@@ -77,5 +77,5 @@ export const STUDIO_FEATURES = [
 export const CONTACTS = {
   email: 'hello@tonightsound.studio',
   phone: '+48 000 000 000',
-  address: 'Варшава, ул. Космическая, 7',
+  address: 'Сергиев Посад, пр. красной армии, 180',
 };

@@ -157,7 +157,7 @@ export default function Home() {
                 Готов записать <span className="accent">свой трек</span>?
               </h2>
               <p>
-                Выбери удобный день и время — мы свяжемся с тобой в VK,
+                Выбери удобный день и время — мы свяжемся с тобой в Telegram,
                 а запись появится в твоём личном кабинете.
               </p>
               <Link to="/booking" className="btn btn-primary">Записаться на сессию</Link>

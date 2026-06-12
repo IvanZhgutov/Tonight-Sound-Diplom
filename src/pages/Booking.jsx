@@ -136,6 +136,11 @@ export default function Booking() {
     if (!telegram.trim()) return setError('Укажи Telegram ID для связи');
 
     setSubmitting(true);
+    console.log('dayIso====', dayIso)
+    console.log('times====', times)
+    console.log('service.slug====', service.slug)
+    console.log('telegram====', telegram)
+    console.log('comment====', comment)
     const result = await createBooking({
       date: dayIso,
       times: [...times].sort(),
@@ -323,7 +328,7 @@ export default function Booking() {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor="telegram">Ваш ID в VK (для связи)</label>
+                  <label htmlFor="telegram">Ваш ID в Telegram</label>
                   <input
                     id="telegram"
                     type="text"
