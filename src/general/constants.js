@@ -76,6 +76,6 @@ export const STUDIO_FEATURES = [
 
 export const CONTACTS = {
   email: 'hello@tonightsound.studio',
-  phone: '+48 000 000 000',
+  phone: '+7 123 123 12 12',
   address: 'Сергиев Посад, пр. красной армии, 180',
 };
