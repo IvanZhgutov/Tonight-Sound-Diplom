@@ -34,7 +34,7 @@ export default function Home() {
             variants={staggerContainer}
           >
             <motion.span className="eyebrow" variants={staggerItem}>
-              Студия звукозаписи · Варшава
+              Студия звукозаписи · Сергиев Посад
             </motion.span>
             <motion.h1 variants={staggerItem}>
               Звук, который <span className="accent">слышно из космоса</span>
@@ -118,7 +118,7 @@ export default function Home() {
               <span className="eyebrow">О студии</span>
               <h2>Пространство, где рождается звук</h2>
               <p>
-                Tonight Sound — компактная студия в центре Варшавы. Одна
+                Tonight Sound — компактная студия в центре Сергиева Посада. Одна
                 акустически подготовленная комната, проверенная цепочка записи
                 и инженер, который слышит, что нужно именно твоему треку.
               </p>
