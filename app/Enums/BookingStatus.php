@@ -11,6 +11,7 @@ enum BookingStatus: string
     case Declined = 'declined';     // отклонена
     case NoShow = 'no_show';        // клиент не пришёл
 
+    
     /**
      * Воронка CRM: какие переходы разрешены из каждого статуса
      */
