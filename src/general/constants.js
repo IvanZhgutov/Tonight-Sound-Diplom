@@ -21,6 +21,7 @@ export const EQUIPMENT = [
   { type: 'MIDI-клавиатура', model: 'Arturia MiniLab 3',       img: '/images/equipment/arturia-minilab-3.webp' },
 ];
 
+
 export const PLUGIN_CATEGORIES = [
   'Все', 'EQ', 'Компрессор', 'Реверб', 'Синтезатор', 'Вокал', 'Мастеринг', 'Эффект',
 ];
