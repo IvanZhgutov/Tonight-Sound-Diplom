@@ -23,7 +23,7 @@ class BookingAdminController extends Controller
         $bookings = Booking::query()
             ->with(['service', 'user'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->orderByRaw("FIELD(status, 'pending', 'confirmed', 'completed', 'paid', 'no_show', 'declined')")
+            ->orderByRaw("FIELD(status, 'pending', 'confirmed', 'completed', 'no_show', 'declined')")
             ->orderBy('date')
             ->get();
 
@@ -37,8 +37,6 @@ class BookingAdminController extends Controller
     {
         $target = BookingStatus::from($request->string('status'));
 
-        // Воронка CRM: pending → confirmed → completed → paid
-        // (с ветками declined и no_show); переходы валидирует enum
         if (! $booking->status->canTransitionTo($target)) {
             throw ValidationException::withMessages([
                 'status' => "Из статуса «{$booking->status->value}» нельзя перейти в «{$target->value}».",
@@ -46,8 +44,9 @@ class BookingAdminController extends Controller
         }
 
         $booking->update([
-            'status' => $target,
-            'paid_at' => $target === BookingStatus::Paid ? now() : $booking->paid_at,
+            'status'  => $target,
+            // Завершённая запись автоматически считается оплаченной
+            'paid_at' => $target === BookingStatus::Completed ? now() : $booking->paid_at,
         ]);
 
         return response()->json([

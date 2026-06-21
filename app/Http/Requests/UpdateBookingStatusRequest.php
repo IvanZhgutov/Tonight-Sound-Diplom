@@ -22,7 +22,6 @@ class UpdateBookingStatusRequest extends FormRequest
                     BookingStatus::Confirmed->value,
                     BookingStatus::Declined->value,
                     BookingStatus::Completed->value,
-                    BookingStatus::Paid->value,
                     BookingStatus::NoShow->value,
                 ]),
             ],

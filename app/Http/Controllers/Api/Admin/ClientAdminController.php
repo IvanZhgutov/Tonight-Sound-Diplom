@@ -146,10 +146,8 @@ class ClientAdminController extends Controller
         return $query
             ->withCount('bookings')
             ->withSum([
-                'bookings as total_spent' => fn ($q) => $q->where('status', BookingStatus::Paid),
-            ], 'total')
-            ->withSum([
-                'bookings as debt' => fn ($q) => $q->where('status', BookingStatus::Completed),
+                'bookings as total_spent' => fn ($q) =>
+                    $q->where('status', BookingStatus::Completed),
             ], 'total')
             ->withMax('bookings as last_booking', 'date');
     }
