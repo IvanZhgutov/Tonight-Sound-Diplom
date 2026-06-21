@@ -7,7 +7,6 @@ import { formatPrice, initials } from '../../general/utils';
 const SORTS = [
   { id: 'spent', label: 'По выручке' },
   { id: 'recent', label: 'Недавние' },
-  { id: 'debt', label: 'С долгом' },
 ];
 
 export default function Clients() {
@@ -100,9 +99,6 @@ export default function Clients() {
               <div className="client-stats">
                 <span><strong>{c.bookings_count}</strong> визитов</span>
                 <span><strong>{formatPrice(c.total_spent)}</strong> оплачено</span>
-                <span className={c.debt > 0 ? 'debt' : ''}>
-                  <strong>{formatPrice(c.debt)}</strong> долг
-                </span>
               </div>
 
               <span className="client-arrow" aria-hidden="true">→</span>

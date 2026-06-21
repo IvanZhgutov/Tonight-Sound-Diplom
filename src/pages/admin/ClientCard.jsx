@@ -170,7 +170,7 @@ export default function ClientCard() {
       </section>
 
       {/* Метрики */}
-      <div className="admin-stats" style={{ marginTop: 20 }}>
+      <div className="admin-stats stats-2" style={{ marginTop: 20 }}>
         <div className="glass admin-stat">
           <strong>{client.bookings_count}</strong>
           <span>визитов всего</span>
@@ -178,12 +178,6 @@ export default function ClientCard() {
         <div className="glass admin-stat">
           <strong>{formatPrice(client.total_spent)}</strong>
           <span>оплачено студии</span>
-        </div>
-        <div className="glass admin-stat">
-          <strong className={client.debt > 0 ? 'stat-debt' : ''}>
-            {formatPrice(client.debt)}
-          </strong>
-          <span>ожидает оплаты</span>
         </div>
       </div>
 

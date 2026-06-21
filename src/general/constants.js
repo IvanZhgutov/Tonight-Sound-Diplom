@@ -21,7 +21,6 @@ export const EQUIPMENT = [
   { type: 'MIDI-клавиатура', model: 'Arturia MiniLab 3',       img: '/images/equipment/arturia-minilab-3.webp' },
 ];
 
-
 export const PLUGIN_CATEGORIES = [
   'Все', 'EQ', 'Компрессор', 'Реверб', 'Синтезатор', 'Вокал', 'Мастеринг', 'Эффект',
 ];
@@ -30,7 +29,6 @@ export const BOOKING_STATUS = {
   pending:   { label: 'Ожидает подтверждения', className: 'wait' },
   confirmed: { label: 'Подтверждена',          className: 'ok' },
   completed: { label: 'Завершена',             className: 'completed' },
-  paid:      { label: 'Оплачена',              className: 'paid' },
   declined:  { label: 'Отклонена',             className: 'declined' },
   no_show:   { label: 'Не пришёл',             className: 'noshow' },
   done:      { label: 'Завершена',             className: 'done' },
@@ -44,7 +42,9 @@ export const displayStatus = (booking) => {
   return BOOKING_STATUS[booking.status] ?? BOOKING_STATUS.pending;
 };
 
-/** Воронка CRM: действия админа для каждого статуса записи */
+/** Воронка CRM: действия админа для каждого статуса записи.
+ *  Завершённая запись автоматически считается оплаченной —
+ *  отдельного статуса «Оплачено» нет. */
 export const PIPELINE_ACTIONS = {
   pending: [
     { to: 'confirmed', label: 'Подтвердить', primary: true },
@@ -53,10 +53,6 @@ export const PIPELINE_ACTIONS = {
   confirmed: [
     { to: 'completed', label: 'Завершена', primary: true },
     { to: 'no_show', label: 'Не пришёл' },
-    { to: 'declined', label: 'Отклонить' },
-  ],
-  completed: [
-    { to: 'paid', label: 'Оплачено', primary: true },
   ],
 };
 
